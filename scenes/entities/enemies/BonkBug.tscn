@@ -1,0 +1,43 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/EnemyBase.gd" id="Script"]
+[ext_resource type="Texture2D" path="res://assets/enemies/bonk_bug.png" id="Tex"]
+
+[sub_resource type="RectangleShape2D" id="BodyShape"]
+size = Vector2(22, 22)
+
+[sub_resource type="RectangleShape2D" id="HurtShape"]
+size = Vector2(22, 22)
+
+[sub_resource type="RectangleShape2D" id="StompShape"]
+size = Vector2(18, 8)
+
+[node name="BonkBug" type="CharacterBody2D"]
+script = ExtResource("Script")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("Tex")
+centered = true
+region_enabled = true
+region_rect = Rect2(0, 0, 32, 32)
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+shape = SubResource("BodyShape")
+
+[node name="LedgeCheck" type="RayCast2D" parent="."]
+position = Vector2(12, 0)
+target_position = Vector2(0, 20)
+
+[node name="WallCheck" type="RayCast2D" parent="."]
+target_position = Vector2(10, 0)
+
+[node name="HurtArea" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HurtArea"]
+shape = SubResource("HurtShape")
+
+[node name="StompZone" type="Area2D" parent="."]
+position = Vector2(0, -11)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StompZone"]
+shape = SubResource("StompShape")

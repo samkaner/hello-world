@@ -1,0 +1,32 @@
+; Engine configuration file.
+; This is a text file with a very specific format, do not modify it more than
+; you know what you are doing.
+
+config_version=5
+
+[application]
+
+config/name="Sproutlandia"
+run/main_scene="res://scenes/Main.tscn"
+config/features=PackedStringArray("4.3", "Compatibility")
+
+[autoload]
+
+InputSetup="*res://scripts/systems/InputSetup.gd"
+GameManager="*res://scripts/systems/GameManager.gd"
+SceneTransition="*res://scripts/systems/SceneTransition.gd"
+
+[display]
+
+window/size/viewport_width=480
+window/size/viewport_height=270
+window/size/window_width_override=960
+window/size/window_height_override=540
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/canvas_textures/default_texture_filter=0

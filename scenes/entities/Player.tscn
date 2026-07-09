@@ -1,0 +1,49 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/player/Player.gd" id="Script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/hero.png" id="HeroTex"]
+
+[sub_resource type="RectangleShape2D" id="BodyShape"]
+size = Vector2(20, 26)
+
+[sub_resource type="CircleShape2D" id="HitboxShape"]
+radius = 10.0
+
+[sub_resource type="RectangleShape2D" id="HurtShape"]
+size = Vector2(18, 24)
+
+[sub_resource type="CircleShape2D" id="StompShape"]
+radius = 8.0
+
+[node name="Player" type="CharacterBody2D"]
+script = ExtResource("Script")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("HeroTex")
+centered = true
+region_enabled = true
+region_rect = Rect2(0, 0, 32, 32)
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+shape = SubResource("BodyShape")
+
+[node name="HitboxArea" type="Area2D" parent="."]
+position = Vector2(16, 0)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HitboxArea"]
+shape = SubResource("HitboxShape")
+
+[node name="HurtArea" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HurtArea"]
+shape = SubResource("HurtShape")
+
+[node name="StompDetector" type="Area2D" parent="."]
+position = Vector2(0, 12)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StompDetector"]
+shape = SubResource("StompShape")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0
