@@ -11,4 +11,6 @@ func _ready() -> void:
 
 func _on_body_entered(body: Node2D) -> void:
 	if body.is_in_group("player"):
+		if GameManager.checkpoint_position != global_position:
+			Sfx.play("checkpoint")
 		GameManager.set_checkpoint(global_position, GameManager.current_level_path)

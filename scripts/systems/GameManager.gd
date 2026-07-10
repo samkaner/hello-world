@@ -8,6 +8,10 @@ extends Node
 signal health_changed(health: int, max_health: int)
 signal game_over
 signal level_completed(level_path: String)
+# Relayed from whichever boss is fighting, so the HUD never needs a direct
+# reference to the boss node.
+signal boss_battle_started(boss_name: String, health: int, max_health: int)
+signal boss_health_changed(health: int, max_health: int)
 
 const LEVEL_ORDER: Array[String] = [
 	"res://scenes/levels/Level1_LadleMeadow.tscn",
@@ -68,7 +72,9 @@ func _handle_defeat() -> void:
 func respawn() -> void:
 	health = max_health
 	health_changed.emit(health, max_health)
-	get_tree().reload_current_scene()
+	# Deferred: defeat is triggered from physics callbacks, and swapping the
+	# scene mid-physics-flush is not safe.
+	get_tree().reload_current_scene.call_deferred()
 
 
 func retry_from_game_over() -> void:
@@ -87,6 +93,7 @@ func start_new_game() -> void:
 
 
 func complete_level() -> void:
+	Sfx.play("level_clear")
 	level_completed.emit(current_level_path)
 	var idx: int = LEVEL_ORDER.find(current_level_path)
 	if idx == -1 or idx == LEVEL_ORDER.size() - 1:

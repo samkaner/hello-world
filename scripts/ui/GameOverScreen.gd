@@ -19,6 +19,8 @@ const JOKES: Array[String] = [
 
 
 func _ready() -> void:
+	Sfx.stop_music()
+	Sfx.play("game_over")
 	joke_label.text = JOKES[randi() % JOKES.size()]
 	retry_button.pressed.connect(_on_retry_pressed)
 	quit_button.pressed.connect(_on_quit_pressed)

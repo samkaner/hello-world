@@ -3,6 +3,7 @@ extends CanvasLayer
 ## separate transition scene.
 
 var _fade_rect: ColorRect
+var _is_transitioning: bool = false
 
 
 func _ready() -> void:
@@ -17,11 +18,15 @@ func _ready() -> void:
 
 
 func goto_scene(path: String) -> void:
+	if _is_transitioning:
+		return
+	_is_transitioning = true
 	get_tree().paused = false
 	var fade_out := create_tween()
 	fade_out.tween_property(_fade_rect, "modulate:a", 1.0, 0.25)
 	await fade_out.finished
 	get_tree().change_scene_to_file(path)
 	await get_tree().process_frame
+	_is_transitioning = false
 	var fade_in := create_tween()
 	fade_in.tween_property(_fade_rect, "modulate:a", 0.0, 0.25)

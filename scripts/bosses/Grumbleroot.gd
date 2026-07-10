@@ -19,6 +19,7 @@ const PROJECTILE_TEXTURE := preload("res://assets/ui/zestberry.png")
 
 func _ready() -> void:
 	super._ready()
+	display_name = "Grumbleroot"
 	max_health = 14
 	health = max_health
 	_phase_health_thresholds = [0.66, 0.33]
@@ -78,6 +79,7 @@ func _summon_attack() -> void:
 
 
 func _shockwave_attack() -> void:
+	_shake_player_camera(4.0, 0.3)
 	hazard_area.monitoring = true
 	await get_tree().create_timer(0.4).timeout
 	hazard_area.monitoring = false

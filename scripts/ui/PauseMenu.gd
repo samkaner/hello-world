@@ -29,4 +29,8 @@ func _toggle_pause() -> void:
 
 
 func _on_quit_pressed() -> void:
-	get_tree().quit()
+	# Back to the title screen, not out of the app -- quitting the whole
+	# game from pause is too easy to hit with a controller.
+	get_tree().paused = false
+	panel.visible = false
+	SceneTransition.goto_scene("res://scenes/ui/TitleScreen.tscn")

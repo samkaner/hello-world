@@ -11,8 +11,8 @@ var _push_direction: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
-	set_collision_layer_value(1, false)
-	set_collision_layer_value(9, true)  # pushable_block
+	set_collision_layer_value(1, true)  # solid to the player (world layer)
+	set_collision_layer_value(9, true)  # pushable_block (pressure plates)
 	set_collision_mask_value(1, true)
 	push_zone.set_collision_layer_value(1, false)
 	push_zone.set_collision_mask_value(2, true)

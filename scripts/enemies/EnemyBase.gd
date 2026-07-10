@@ -80,6 +80,8 @@ func _physics_process(delta: float) -> void:
 
 		if wall_check.is_colliding() or not ledge_check.is_colliding():
 			_direction *= -1
+	elif is_on_wall():
+		_direction *= -1
 
 	velocity.x = speed * _direction
 	sprite.flip_h = _direction < 0
@@ -104,6 +106,7 @@ func stomp_kill() -> void:
 
 func die() -> void:
 	died.emit()
+	Sfx.play("enemy_die")
 	queue_free()
 
 

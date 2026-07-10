@@ -16,8 +16,12 @@ func _build_level() -> void:
 		Rect2(0, 0, 480, 16),
 		Rect2(0, 254, 480, 16),
 		Rect2(0, 0, 16, 270),
+		# Block the low half of the corridor exit so the player leaves
+		# above the first platforming floor (top y=220) instead of
+		# switching to gravity mode while inside its collider.
+		Rect2(464, 200, 16, 54),
 	])
-	spawn_platform_mode_zone(Rect2(470, 0, 20, 270))
+	spawn_platform_mode_zone(Rect2(470, 0, 20, 200))
 
 	_spawn_twiglet(Vector2(200, 100))
 	_spawn_twiglet(Vector2(200, 200))
@@ -29,6 +33,8 @@ func _build_level() -> void:
 		Rect2(730, 160, 90, 20),
 		Rect2(840, 130, 90, 20),
 		Rect2(950, 100, 400, 20),
+		# Right arena wall so nobody leaves past Grumbleroot.
+		Rect2(1350, 0, 16, 120),
 	])
 	spawn_kill_zone(Rect2(480, 260, 900, 40))
 

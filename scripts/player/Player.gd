@@ -46,6 +46,10 @@ var _controls_locked: bool = false
 @onready var hitbox_area: Area2D = $HitboxArea
 @onready var hurt_area: Area2D = $HurtArea
 @onready var stomp_detector: Area2D = $StompDetector
+@onready var camera: Camera2D = $Camera2D
+
+var _shake_timer: float = 0.0
+var _shake_strength: float = 0.0
 
 
 func _ready() -> void:
@@ -101,8 +105,23 @@ func _physics_process(delta: float) -> void:
 		if _attack_timer <= 0.0:
 			hitbox_area.monitoring = false
 
+	if _shake_timer > 0.0:
+		_shake_timer = max(_shake_timer - delta, 0.0)
+		if _shake_timer > 0.0:
+			camera.offset = Vector2(
+				randf_range(-_shake_strength, _shake_strength),
+				randf_range(-_shake_strength, _shake_strength)
+			)
+		else:
+			camera.offset = Vector2.ZERO
+
 	_update_animation(delta)
 	move_and_slide()
+
+
+func shake_camera(strength: float = 3.0, duration: float = 0.2) -> void:
+	_shake_strength = strength
+	_shake_timer = duration
 
 
 func _physics_process_platformer(delta: float) -> void:
@@ -137,13 +156,17 @@ func _physics_process_platformer(delta: float) -> void:
 		velocity.y = jump_velocity
 		_jump_buffer_timer = 0.0
 		_coyote_timer = 0.0
+		Sfx.play("jump")
 	elif not on_floor and not _controls_locked and Input.is_action_pressed("jump") and velocity.y > 0.0 and _hover_timer > 0.0:
 		_hover_timer -= delta
 
 	if not _controls_locked and Input.is_action_just_pressed("attack"):
 		_start_attack()
 
-	_state = _pick_platformer_state(on_floor)
+	var new_state := _pick_platformer_state(on_floor)
+	if new_state == State.HOVER and _state != State.HOVER:
+		Sfx.play("hover")
+	_state = new_state
 
 
 func _physics_process_top_down(delta: float) -> void:
@@ -151,7 +174,10 @@ func _physics_process_top_down(delta: float) -> void:
 		Input.get_axis("move_left", "move_right"),
 		Input.get_axis("move_up", "move_down")
 	)
-	if not _controls_locked and input_vec.length() > 0.0:
+	if _controls_locked:
+		# Let knockback play out instead of zeroing it instantly.
+		velocity = velocity.move_toward(Vector2.ZERO, speed * 4.0 * delta)
+	elif input_vec.length() > 0.0:
 		input_vec = input_vec.normalized()
 		if input_vec.x != 0.0:
 			_facing = int(sign(input_vec.x))
@@ -190,6 +216,7 @@ func _pick_platformer_state(on_floor: bool) -> State:
 func _start_attack() -> void:
 	_attack_timer = 0.25
 	_state = State.ATTACK
+	Sfx.play("attack")
 	var pos := hitbox_area.position
 	pos.x = attack_offset_x * _facing
 	hitbox_area.position = pos
@@ -202,6 +229,8 @@ func take_damage(amount: int, knockback_dir: Vector2 = Vector2.ZERO) -> void:
 	_hurt_timer = 0.3
 	_invincible_timer = invincible_time
 	_state = State.HURT
+	Sfx.play("hurt")
+	shake_camera(3.0, 0.25)
 	if knockback_dir != Vector2.ZERO:
 		velocity = knockback_dir.normalized() * knockback_force
 	GameManager.take_damage(amount)
@@ -214,16 +243,14 @@ func _on_hitbox_area_entered(area: Area2D) -> void:
 
 
 func _on_hurt_area_body_entered(body: Node2D) -> void:
-	if body.has_method("get_contact_damage"):
-		var dir: Vector2 = global_position - body.global_position
-		take_damage(body.get_contact_damage(), dir)
-
-
-func _on_hurt_area_area_entered(area: Area2D) -> void:
-	var source := area.get_parent()
-	if source and source.has_method("get_contact_damage"):
-		var dir: Vector2 = global_position - source.global_position
-		take_damage(source.get_contact_damage(), dir)
+	if not body.has_method("get_contact_damage"):
+		return
+	# Falling onto an enemy from above is a stomp, not a hit -- the
+	# StompDetector overlap fires off the same contact, so let it win.
+	if not top_down_mode and velocity.y > 0.0 and global_position.y < body.global_position.y and body.has_method("stomp_kill"):
+		return
+	var dir: Vector2 = global_position - body.global_position
+	take_damage(body.get_contact_damage(), dir)
 
 
 func _on_stomp_area_entered(area: Area2D) -> void:
@@ -231,6 +258,8 @@ func _on_stomp_area_entered(area: Area2D) -> void:
 	if target and target.has_method("stomp_kill"):
 		target.stomp_kill()
 		velocity.y = jump_velocity * 0.6
+		Sfx.play("stomp")
+		shake_camera(1.5, 0.1)
 
 
 func _update_animation(delta: float) -> void:

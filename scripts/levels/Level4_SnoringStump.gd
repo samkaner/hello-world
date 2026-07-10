@@ -11,6 +11,10 @@ func _build_level() -> void:
 
 	build_floor([
 		Rect2(0, 220, 900, 60),
+		# Arena edge walls: keep the player in and stop Big Yawn's roll
+		# from carrying him off the map.
+		Rect2(-16, 0, 16, 270),
+		Rect2(900, 0, 16, 270),
 	])
 	spawn_kill_zone(Rect2(0, 300, 900, 40))
 

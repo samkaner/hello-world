@@ -12,6 +12,7 @@ signal health_changed(health: int, max_health: int)
 
 enum Phase { IDLE, TELEGRAPH, ATTACK, RECOVER, DEFEATED }
 
+@export var display_name: String = "Boss"
 @export var max_health: int = 10
 @export var gravity: float = 900.0
 @export var contact_damage: int = 1
@@ -52,6 +53,8 @@ func start_battle() -> void:
 	if _battle_active:
 		return
 	_battle_active = true
+	Sfx.play("boss_roar")
+	GameManager.boss_battle_started.emit(display_name, health, max_health)
 	_run_battle_loop()
 
 
@@ -73,7 +76,9 @@ func take_damage(amount: int) -> void:
 		return
 	health = max(health - amount, 0)
 	_hurt_flash_timer = 0.15
+	Sfx.play("boss_hit")
 	health_changed.emit(health, max_health)
+	GameManager.boss_health_changed.emit(health, max_health)
 	if health <= 0:
 		_defeat()
 
@@ -95,6 +100,7 @@ func _run_battle_loop() -> void:
 		if not _battle_active:
 			return
 
+		_face_player()
 		phase = Phase.TELEGRAPH
 		var pulse := create_tween()
 		pulse.tween_property(sprite, "scale", Vector2(1.15, 1.15), 0.15)
@@ -110,6 +116,18 @@ func _run_battle_loop() -> void:
 
 		phase = Phase.RECOVER
 		await get_tree().create_timer(recover_time).timeout
+
+
+func _face_player() -> void:
+	var player := get_tree().get_first_node_in_group("player")
+	if player:
+		sprite.flip_h = player.global_position.x < global_position.x
+
+
+func _shake_player_camera(strength: float, duration: float) -> void:
+	var player := get_tree().get_first_node_in_group("player")
+	if player and player.has_method("shake_camera"):
+		player.shake_camera(strength, duration)
 
 
 func _current_stage() -> int:

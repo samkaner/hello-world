@@ -28,6 +28,7 @@ const HEAL_PICKUP_SCRIPT := preload("res://scripts/systems/HealPickup.gd")
 func _ready() -> void:
 	GameManager.register_level(scene_file_path, is_boss_level)
 	player.global_position = GameManager.get_respawn_position(player.global_position)
+	Sfx.play_music("boss" if is_boss_level else "overworld")
 	_build_level()
 
 
@@ -72,11 +73,13 @@ func build_walls(rects: Array) -> void:
 
 
 func spawn_checkpoint(rect: Rect2) -> void:
-	_spawn_trigger(CHECKPOINT_SCRIPT, rect)
+	var area := _spawn_trigger(CHECKPOINT_SCRIPT, rect)
+	_add_trigger_visual(area, rect.size, Color(0.3, 0.9, 1.0, 0.35))
 
 
 func spawn_goal(rect: Rect2) -> void:
-	_spawn_trigger(GOAL_SCRIPT, rect)
+	var area := _spawn_trigger(GOAL_SCRIPT, rect)
+	_add_trigger_visual(area, rect.size, Color(1.0, 0.85, 0.2, 0.5))
 
 
 func spawn_kill_zone(rect: Rect2) -> void:
@@ -89,11 +92,14 @@ func spawn_boss_arena(rect: Rect2, boss: Node) -> void:
 
 
 func spawn_pressure_plate(rect: Rect2) -> Area2D:
-	return _spawn_trigger(PRESSURE_PLATE_SCRIPT, rect)
+	var area := _spawn_trigger(PRESSURE_PLATE_SCRIPT, rect)
+	_add_trigger_visual(area, rect.size, Color(0.45, 0.4, 0.32, 1.0))
+	return area
 
 
 func spawn_bounce_pad(rect: Rect2) -> void:
-	_spawn_trigger(BOUNCE_PAD_SCRIPT, rect)
+	var area := _spawn_trigger(BOUNCE_PAD_SCRIPT, rect)
+	_add_trigger_visual(area, rect.size, Color(0.4, 0.85, 1.0, 0.85))
 
 
 func spawn_top_down_zone(rect: Rect2) -> void:
@@ -105,11 +111,29 @@ func spawn_platform_mode_zone(rect: Rect2) -> void:
 
 
 func spawn_heal_pickup(rect: Rect2) -> void:
-	_spawn_trigger(HEAL_PICKUP_SCRIPT, rect)
+	var area := _spawn_trigger(HEAL_PICKUP_SCRIPT, rect)
+	var berry := Sprite2D.new()
+	berry.texture = preload("res://assets/ui/zestberry.png")
+	area.add_child(berry)
+
+
+func spawn_hint(text: String, pos: Vector2) -> void:
+	## A small floating hint label in world space (used to teach controls).
+	var label := Label.new()
+	label.text = text
+	label.position = pos
+	label.add_theme_font_size_override("font_size", 8)
+	label.add_theme_color_override("font_color", Color(1, 1, 1, 0.9))
+	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	label.add_theme_constant_override("outline_size", 2)
+	add_child(label)
 
 
 func spawn_door(rect: Rect2) -> StaticBody2D:
 	var door := PlatformBuilder.build_platform(self, rect, wall_texture)
+	for child in door.get_children():
+		if child is Sprite2D:
+			child.modulate = Color(0.8, 0.7, 1.0)  # reads as "special wall"
 	door.set_script(DOOR_SCRIPT)
 	return door
 
@@ -143,6 +167,17 @@ func spawn_pushable_block(rect: Rect2) -> CharacterBody2D:
 	block.set_script(PUSHABLE_BLOCK_SCRIPT)
 	add_child(block)
 	return block
+
+
+func _add_trigger_visual(area: Area2D, size: Vector2, color: Color) -> void:
+	var poly := Polygon2D.new()
+	var half := size / 2.0
+	poly.polygon = PackedVector2Array([
+		Vector2(-half.x, -half.y), Vector2(half.x, -half.y),
+		Vector2(half.x, half.y), Vector2(-half.x, half.y),
+	])
+	poly.color = color
+	area.add_child(poly)
 
 
 func _spawn_trigger(script: Script, rect: Rect2) -> Area2D:

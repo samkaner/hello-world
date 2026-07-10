@@ -15,10 +15,16 @@ func _build_level() -> void:
 	])
 	PlatformBuilder.build_platforms(self, [
 		Rect2(460, 120, 140, 20),
+		# Level-edge walls so nobody strolls off the map.
+		Rect2(-16, 0, 16, 270),
+		Rect2(1400, 0, 16, 270),
 	], ground_texture)
 
-	spawn_bounce_pad(Rect2(490, 205, 60, 14))
-	spawn_top_down_zone(Rect2(460, 90, 140, 40))
+	# Bounce pad sits beside the platform (not under it, or the player just
+	# bonks its underside); the launch apex lands inside the top-down zone,
+	# which covers the flight path and the alcove above the platform.
+	spawn_bounce_pad(Rect2(620, 205, 60, 14))
+	spawn_top_down_zone(Rect2(460, 80, 220, 50))
 	spawn_heal_pickup(Rect2(518, 98, 24, 24))
 
 	spawn_checkpoint(Rect2(740, 190, 20, 30))

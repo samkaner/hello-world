@@ -6,6 +6,8 @@ extends Control
 
 
 func _ready() -> void:
+	Sfx.stop_music()
+	Sfx.play("victory")
 	title_button.pressed.connect(_on_title_pressed)
 	quit_button.pressed.connect(_on_quit_pressed)
 	title_button.grab_focus()
