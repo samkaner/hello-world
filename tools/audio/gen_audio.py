@@ -199,6 +199,46 @@ def sequence(notes, beat: float, wave_fn, amp: float, gap: float = 0.02) -> list
     return out
 
 
+def _kick() -> list:
+    """A soft chip-kick: fast pitch drop with a click of noise."""
+    state = [3]
+    return render(0.09, lambda t: triangle(t * (130 - 900 * t if 130 - 900 * t > 35 else 35))
+                  * 0.5 * envelope(t, 0.09, 0.002, 0.05)
+                  + noise(state) * 0.06 * envelope(t, 0.09, 0.001, 0.02))
+
+
+def _hat(open_hat: bool = False) -> list:
+    """A short noise hat; open variant rings slightly longer."""
+    dur = 0.07 if open_hat else 0.03
+    state = [51]
+    return render(dur, lambda t: noise(state) * 0.11 * envelope(t, dur, 0.001, dur * 0.8))
+
+
+def drum_track(total_beats: float, beat: float,
+               kick_beats: list, hat_eighths: bool = True) -> list:
+    """Kicks at the given beat offsets, closed hats on every off-eighth."""
+    total = silence(total_beats * beat)
+    k = _kick()
+    h = _hat()
+    ho = _hat(open_hat=True)
+
+    def stamp(sound: list, at_beats: float) -> None:
+        start = int(at_beats * beat * SAMPLE_RATE)
+        for i, s in enumerate(sound):
+            if start + i < len(total):
+                total[start + i] += s
+
+    for kb in kick_beats:
+        stamp(k, kb)
+    if hat_eighths:
+        eighth = 0.5
+        n = int(total_beats / eighth)
+        for i in range(n):
+            if (i % 2) == 1:
+                stamp(ho if i % 8 == 7 else h, i * eighth)
+    return total
+
+
 def music_overworld() -> list:
     beat = 60.0 / 132.0  # cheerful stroll
     e = 0.5  # eighth note
@@ -222,25 +262,47 @@ def music_overworld() -> list:
         (53, 1.0), (60, 1.0), (52, 1.0), (59, 1.0),
         (50, 1.0), (55, 1.0), (48, 2.0),
     ], beat, triangle, amp=0.18)
-    return mix(melody, bass)
+    drums = drum_track(32.0, beat, [b for b in range(0, 32, 2)])
+    return mix(melody, bass, drums)
 
 
 def music_boss() -> list:
     beat = 60.0 / 150.0  # urgent
     e = 0.5
+    # A section: prowling. B section: the same idea a fourth up, answered
+    # by a falling run -- keeps the loop from wearing out its welcome.
     melody = sequence([
         (69, e), (None, e), (69, e), (72, e), (69, e), (None, e), (76, e), (75, e),
         (69, e), (None, e), (69, e), (72, e), (74, e), (72, e), (69, e), (67, e),
         (65, e), (None, e), (65, e), (69, e), (65, e), (None, e), (72, e), (71, e),
         (67, e), (67, e), (71, e), (74, e), (76, 1.0), (75, 1.0),
+        (74, e), (None, e), (74, e), (77, e), (74, e), (None, e), (81, e), (80, e),
+        (74, e), (None, e), (74, e), (77, e), (79, e), (77, e), (74, e), (72, e),
+        (81, e), (79, e), (77, e), (76, e), (74, e), (72, e), (71, e), (69, e),
+        (67, e), (69, e), (71, e), (72, e), (69, 1.0), (68, 1.0),
     ], beat, square, amp=0.14)
+    harmony = sequence([
+        (None, 17.0),  # silent through the A section
+        (57, 2.0), (None, 2.0), (57, 2.0), (None, 2.0),
+        (53, 2.0), (None, 2.0), (55, 2.0), (52, 2.0),
+    ], beat, triangle, amp=0.10)
     bass = sequence([
         (45, e), (45, e), (45, e), (47, e), (48, e), (48, e), (47, e), (45, e),
         (45, e), (45, e), (45, e), (47, e), (48, e), (50, e), (52, e), (48, e),
         (41, e), (41, e), (41, e), (43, e), (45, e), (45, e), (43, e), (41, e),
         (43, e), (43, e), (47, e), (47, e), (52, 1.0), (47, 1.0),
+        (50, e), (50, e), (50, e), (52, e), (53, e), (53, e), (52, e), (50, e),
+        (50, e), (50, e), (50, e), (52, e), (53, e), (55, e), (57, e), (53, e),
+        (53, e), (53, e), (52, e), (52, e), (50, e), (50, e), (48, e), (48, e),
+        (43, e), (43, e), (47, e), (47, e), (45, 1.0), (44, 1.0),
     ], beat, saw, amp=0.14)
-    return mix(melody, bass)
+    kicks = []
+    for b in range(32):
+        kicks.append(float(b))
+        if b % 4 == 3:
+            kicks.append(b + 0.5)  # extra push into each bar line
+    drums = drum_track(32.0, beat, kicks)
+    return mix(melody, harmony, bass, drums)
 
 
 # ---------------------------------------------------------------------------
