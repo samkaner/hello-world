@@ -44,4 +44,4 @@ text = "Retry"
 
 [node name="QuitButton" type="Button" parent="VBox/Buttons"]
 custom_minimum_size = Vector2(100, 32)
-text = "Quit"
+text = "Quit to Title"

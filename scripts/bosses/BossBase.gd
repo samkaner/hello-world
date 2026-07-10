@@ -41,11 +41,13 @@ func _ready() -> void:
 
 	# See Player.gd for the full collision layer scheme: this body sits on
 	# layer 4 (boss_body); HurtArea is layer 7 (boss_hurtbox, ladle target).
-	set_collision_layer_value(1, false)
+	collision_layer = 0
+	collision_mask = 0
 	set_collision_layer_value(4, true)
 	set_collision_mask_value(1, true)
 
-	hurt_area.set_collision_layer_value(1, false)
+	hurt_area.collision_layer = 0
+	hurt_area.collision_mask = 0
 	hurt_area.set_collision_layer_value(7, true)
 
 

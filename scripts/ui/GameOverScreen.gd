@@ -32,4 +32,5 @@ func _on_retry_pressed() -> void:
 
 
 func _on_quit_pressed() -> void:
-	get_tree().quit()
+	GameManager.game_over_pending = false
+	SceneTransition.goto_scene("res://scenes/ui/TitleScreen.tscn")

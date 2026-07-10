@@ -19,10 +19,24 @@ func _ready() -> void:
 	_setup_action("move_down", [KEY_DOWN, KEY_S], [JOY_BUTTON_DPAD_DOWN])
 	_setup_action("jump", [KEY_SPACE, KEY_Z], [JOY_BUTTON_A])
 	_setup_action("attack", [KEY_X], [JOY_BUTTON_X])
-	_setup_action("pause", [KEY_ESCAPE], [JOY_BUTTON_START])
+	# Both + (start) and - (back): macOS occasionally reserves one of the
+	# small buttons, so give pause a fallback.
+	_setup_action("pause", [KEY_ESCAPE], [JOY_BUTTON_START, JOY_BUTTON_BACK])
 
 	_setup_axis("move_left", "move_right", JOY_AXIS_LEFT_X)
 	_setup_axis("move_up", "move_down", JOY_AXIS_LEFT_Y)
+
+	# Menus (Retry/Quit buttons etc.) run on Godot's built-in ui_* actions,
+	# which don't reliably include gamepad bindings -- add them so focused
+	# buttons can be pressed and navigated from the controller.
+	_setup_action("ui_accept", [], [JOY_BUTTON_A])
+	_setup_action("ui_cancel", [], [JOY_BUTTON_B])
+	_setup_action("ui_left", [], [JOY_BUTTON_DPAD_LEFT])
+	_setup_action("ui_right", [], [JOY_BUTTON_DPAD_RIGHT])
+	_setup_action("ui_up", [], [JOY_BUTTON_DPAD_UP])
+	_setup_action("ui_down", [], [JOY_BUTTON_DPAD_DOWN])
+	_setup_axis("ui_left", "ui_right", JOY_AXIS_LEFT_X)
+	_setup_axis("ui_up", "ui_down", JOY_AXIS_LEFT_Y)
 
 func _setup_action(action_name: String, keys: Array, joy_buttons: Array) -> void:
 	if not InputMap.has_action(action_name):

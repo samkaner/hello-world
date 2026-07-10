@@ -23,7 +23,8 @@ func _ready() -> void:
 	_phase_health_thresholds = [0.55]
 
 	hazard_area.monitoring = false
-	hazard_area.set_collision_layer_value(1, false)
+	hazard_area.collision_layer = 0
+	hazard_area.collision_mask = 0
 	hazard_area.set_collision_mask_value(2, true)
 	hazard_area.body_entered.connect(_on_hazard_body_entered)
 

@@ -42,14 +42,17 @@ func _ready() -> void:
 	# layer 3 (enemy_body, for contact damage); HurtArea/StompZone are
 	# separate layers (6/8) so a ladle swing and a stomp can never both
 	# fire off the same overlap.
-	set_collision_layer_value(1, false)
+	collision_layer = 0
+	collision_mask = 0
 	set_collision_layer_value(3, true)
 	set_collision_mask_value(1, true)
 
-	hurt_area.set_collision_layer_value(1, false)
+	hurt_area.collision_layer = 0
+	hurt_area.collision_mask = 0
 	hurt_area.set_collision_layer_value(6, true)
 
-	stomp_zone.set_collision_layer_value(1, false)
+	stomp_zone.collision_layer = 0
+	stomp_zone.collision_mask = 0
 	stomp_zone.set_collision_layer_value(8, true)
 
 

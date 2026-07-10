@@ -14,7 +14,8 @@ func _ready() -> void:
 	set_collision_layer_value(1, true)  # solid to the player (world layer)
 	set_collision_layer_value(9, true)  # pushable_block (pressure plates)
 	set_collision_mask_value(1, true)
-	push_zone.set_collision_layer_value(1, false)
+	push_zone.collision_layer = 0
+	push_zone.collision_mask = 0
 	push_zone.set_collision_mask_value(2, true)
 	push_zone.body_entered.connect(_on_push_zone_body_entered)
 	push_zone.body_exited.connect(_on_push_zone_body_exited)

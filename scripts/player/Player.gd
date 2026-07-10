@@ -10,8 +10,11 @@ signal died
 @export var speed: float = 140.0
 @export var jump_velocity: float = -260.0
 @export var gravity: float = 900.0
-@export var hover_gravity_scale: float = 0.3
-@export var hover_max_time: float = 0.6
+@export var max_fall_speed: float = 320.0
+@export var hover_descent_speed: float = 35.0
+@export var hover_max_time: float = 1.0
+@export var ground_accel: float = 1600.0
+@export var air_accel: float = 1100.0
 @export var coyote_time: float = 0.12
 @export var jump_buffer_time: float = 0.12
 @export var top_down_mode: bool = false
@@ -41,6 +44,10 @@ var _invincible_timer: float = 0.0
 var _walk_anim_timer: float = 0.0
 var _walk_frame_toggle: bool = false
 var _controls_locked: bool = false
+var _hovering: bool = false
+var _was_on_floor: bool = true
+var _prev_fall_speed: float = 0.0
+var _swipe: Polygon2D
 
 @onready var sprite: Sprite2D = $Sprite
 @onready var hitbox_area: Area2D = $HitboxArea
@@ -62,11 +69,17 @@ func _ready() -> void:
 	#   8=stomp_zone (top-of-enemy stomp target)
 	# Each interaction type uses exactly one detection direction so damage
 	# can never double-fire from both sides of an overlap.
-	set_collision_layer_value(1, false)
+	# Always clear the default bit-1 layer/mask before setting bits: a
+	# leaked default meant the attack hitbox could detect the player's own
+	# hurtbox (both defaulted to bit 1) -- i.e. swinging the ladle hurt Pip.
+	collision_layer = 0
+	collision_mask = 0
 	set_collision_layer_value(2, true)
 	set_collision_mask_value(1, true)
 
 	hitbox_area.monitoring = false
+	hitbox_area.collision_layer = 0
+	hitbox_area.collision_mask = 0
 	hitbox_area.set_collision_mask_value(6, true)
 	hitbox_area.set_collision_mask_value(7, true)
 	hitbox_area.area_entered.connect(_on_hitbox_area_entered)
@@ -74,12 +87,36 @@ func _ready() -> void:
 	# Dedicated hazard attacks (boss slams/projectiles) detect the player
 	# directly and call take_damage() themselves, so they don't route
 	# through this area.
+	hurt_area.collision_layer = 0
+	hurt_area.collision_mask = 0
 	hurt_area.set_collision_mask_value(3, true)
 	hurt_area.set_collision_mask_value(4, true)
 	hurt_area.body_entered.connect(_on_hurt_area_body_entered)
 
+	stomp_detector.collision_layer = 0
+	stomp_detector.collision_mask = 0
 	stomp_detector.set_collision_mask_value(8, true)
 	stomp_detector.area_entered.connect(_on_stomp_area_entered)
+
+	_build_swipe_visual()
+
+
+func _build_swipe_visual() -> void:
+	# A crescent arc that sweeps during the ladle swing, so the attack is
+	# actually visible instead of just a sprite frame change.
+	var points: PackedVector2Array = []
+	var steps := 8
+	for i in steps + 1:
+		var a := lerpf(-1.1, 1.1, float(i) / steps)
+		points.append(Vector2(cos(a), sin(a)) * 15.0)
+	for i in steps + 1:
+		var a := lerpf(1.1, -1.1, float(i) / steps)
+		points.append(Vector2(cos(a), sin(a)) * 9.0)
+	_swipe = Polygon2D.new()
+	_swipe.polygon = points
+	_swipe.color = Color(1.0, 0.95, 0.75, 0.85)
+	_swipe.visible = false
+	hitbox_area.add_child(_swipe)
 
 
 func _physics_process(delta: float) -> void:
@@ -125,7 +162,22 @@ func shake_camera(strength: float = 3.0, duration: float = 0.2) -> void:
 
 
 func _physics_process_platformer(delta: float) -> void:
-	velocity.y += gravity * _current_gravity_scale() * delta
+	var on_floor := is_on_floor()
+
+	# Kirby-style hover: while falling with jump held, settle quickly into
+	# a gentle constant descent instead of just weakening gravity -- much
+	# smoother and easier to steer.
+	_hovering = not on_floor and not _controls_locked \
+		and Input.is_action_pressed("jump") and velocity.y > 0.0 and _hover_timer > 0.0
+	if _hovering:
+		_hover_timer -= delta
+		velocity.y = move_toward(velocity.y, hover_descent_speed, 1400.0 * delta)
+	else:
+		velocity.y = min(velocity.y + gravity * delta, max_fall_speed)
+
+	# Variable jump height: releasing jump early cuts the rise short.
+	if Input.is_action_just_released("jump") and velocity.y < 0.0:
+		velocity.y *= 0.45
 
 	var input_dir := 0.0
 	if not _controls_locked:
@@ -135,13 +187,17 @@ func _physics_process_platformer(delta: float) -> void:
 		_facing = int(sign(input_dir))
 		sprite.flip_h = _facing < 0
 
+	# Accelerate toward the target speed instead of snapping -- keeps runs
+	# responsive but takes the "on ice-skates made of glue" edge off.
 	if _controls_locked:
-		velocity.x = move_toward(velocity.x, 0.0, speed * delta)
+		velocity.x = move_toward(velocity.x, 0.0, ground_accel * 0.5 * delta)
 	else:
-		velocity.x = input_dir * speed
+		var accel := ground_accel if on_floor else air_accel
+		velocity.x = move_toward(velocity.x, input_dir * speed, accel * delta)
 
-	var on_floor := is_on_floor()
 	if on_floor:
+		if not _was_on_floor and _prev_fall_speed > 140.0:
+			_apply_squash(Vector2(1.25, 0.75))
 		_coyote_timer = coyote_time
 		_hover_timer = hover_max_time
 	else:
@@ -157,16 +213,25 @@ func _physics_process_platformer(delta: float) -> void:
 		_jump_buffer_timer = 0.0
 		_coyote_timer = 0.0
 		Sfx.play("jump")
-	elif not on_floor and not _controls_locked and Input.is_action_pressed("jump") and velocity.y > 0.0 and _hover_timer > 0.0:
-		_hover_timer -= delta
+		_apply_squash(Vector2(0.8, 1.2))
 
 	if not _controls_locked and Input.is_action_just_pressed("attack"):
 		_start_attack()
+
+	_was_on_floor = on_floor
+	_prev_fall_speed = velocity.y
 
 	var new_state := _pick_platformer_state(on_floor)
 	if new_state == State.HOVER and _state != State.HOVER:
 		Sfx.play("hover")
 	_state = new_state
+
+
+func _apply_squash(squash: Vector2) -> void:
+	sprite.scale = squash
+	var tween := create_tween()
+	tween.tween_property(sprite, "scale", Vector2.ONE, 0.18)\
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _physics_process_top_down(delta: float) -> void:
@@ -195,19 +260,13 @@ func _physics_process_top_down(delta: float) -> void:
 		_state = State.RUN if velocity.length() > 1.0 else State.IDLE
 
 
-func _current_gravity_scale() -> float:
-	if velocity.y > 0.0 and Input.is_action_pressed("jump") and _hover_timer > 0.0:
-		return hover_gravity_scale
-	return 1.0
-
-
 func _pick_platformer_state(on_floor: bool) -> State:
 	if _hurt_timer > 0.0:
 		return State.HURT
 	if _attack_timer > 0.0:
 		return State.ATTACK
 	if not on_floor:
-		return State.HOVER if _current_gravity_scale() < 1.0 else State.JUMP
+		return State.HOVER if _hovering else State.JUMP
 	if abs(velocity.x) > 1.0:
 		return State.RUN
 	return State.IDLE
@@ -221,6 +280,15 @@ func _start_attack() -> void:
 	pos.x = attack_offset_x * _facing
 	hitbox_area.position = pos
 	hitbox_area.monitoring = true
+
+	_swipe.visible = true
+	_swipe.scale = Vector2(_facing, 1.0)
+	_swipe.rotation = -1.2 * _facing
+	_swipe.modulate.a = 1.0
+	var tween := create_tween()
+	tween.tween_property(_swipe, "rotation", 1.2 * _facing, 0.16)
+	tween.parallel().tween_property(_swipe, "modulate:a", 0.0, 0.22)
+	tween.tween_callback(func() -> void: _swipe.visible = false)
 
 
 func take_damage(amount: int, knockback_dir: Vector2 = Vector2.ZERO) -> void:

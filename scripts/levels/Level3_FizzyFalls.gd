@@ -21,9 +21,13 @@ func _build_level() -> void:
 	], ground_texture)
 
 	# Bounce pad sits beside the platform (not under it, or the player just
-	# bonks its underside); the launch apex lands inside the top-down zone,
-	# which covers the flight path and the alcove above the platform.
-	spawn_bounce_pad(Rect2(620, 205, 60, 14))
+	# bonks its underside) on a small pedestal so it's a deliberate hop, not
+	# a trap on the walking path. The launch apex lands inside the top-down
+	# zone, which covers the flight path and the alcove above the platform.
+	PlatformBuilder.build_platforms(self, [
+		Rect2(628, 212, 48, 8),
+	], ground_texture)
+	spawn_bounce_pad(Rect2(628, 202, 48, 10))
 	spawn_top_down_zone(Rect2(460, 80, 220, 50))
 	spawn_heal_pickup(Rect2(518, 98, 24, 24))
 

@@ -9,7 +9,8 @@ var _triggered: bool = false
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
-	set_collision_layer_value(1, false)
+	collision_layer = 0
+	collision_mask = 0
 	set_collision_mask_value(2, true)
 
 

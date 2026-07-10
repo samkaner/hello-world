@@ -103,3 +103,59 @@ def hstack_frames(frames):
         sheet.alpha_composite(f, (x, 0))
         x += f.width
     return sheet
+
+
+def lighten(color, amount):
+    """Blend a color toward white by `amount` (0.0-1.0)."""
+    r, g, b = color[:3]
+    return (
+        int(r + (255 - r) * amount),
+        int(g + (255 - g) * amount),
+        int(b + (255 - b) * amount),
+        255,
+    )
+
+
+def darken(color, amount):
+    """Blend a color toward black by `amount` (0.0-1.0)."""
+    r, g, b = color[:3]
+    return (int(r * (1 - amount)), int(g * (1 - amount)), int(b * (1 - amount)), 255)
+
+
+def outline_pass(image, ink):
+    """Draw a 1px `ink` outline around the opaque silhouette: every
+    transparent pixel that touches an opaque pixel (4-neighborhood) becomes
+    ink. Gives hand-inked-looking outlines regardless of how the shapes
+    underneath were drawn."""
+    w, h = image.size
+    src = image.load()
+    to_ink = []
+    for y in range(h):
+        for x in range(w):
+            if src[x, y][3] != 0:
+                continue
+            for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+                if 0 <= nx < w and 0 <= ny < h and src[nx, ny][3] != 0:
+                    to_ink.append((x, y))
+                    break
+    for x, y in to_ink:
+        src[x, y] = tuple(ink)
+    return image
+
+
+def shaded_ellipse(canvas, cx, cy, rx, ry, base, shade, light):
+    """A 3-tone shaded ellipse: base fill, lower-right crescent shade,
+    upper-left highlight arc. No outline (use outline_pass at the end)."""
+    canvas.draw.ellipse([cx - rx, cy - ry, cx + rx, cy + ry], fill=base)
+    # shade: overlap of the body with a copy shifted up-left, keep lower rim
+    canvas.draw.ellipse(
+        [cx - rx + 2, cy - ry + 1, cx + rx, cy + ry], fill=shade
+    )
+    canvas.draw.ellipse(
+        [cx - rx + 2, cy - ry, cx + rx - 2, cy + ry - 2], fill=base
+    )
+    # highlight arc top-left
+    canvas.draw.arc(
+        [cx - rx + 2, cy - ry + 2, cx + rx - 2, cy + ry - 2],
+        start=190, end=290, fill=light, width=2,
+    )

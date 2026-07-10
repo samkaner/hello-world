@@ -15,9 +15,12 @@ func _ready() -> void:
 	quit_button.pressed.connect(_on_quit_pressed)
 
 
-func _unhandled_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
+	# _input (not _unhandled_input) so nothing in the GUI can eat the
+	# pause press before it reaches us.
 	if event.is_action_pressed("pause"):
 		_toggle_pause()
+		get_viewport().set_input_as_handled()
 
 
 func _toggle_pause() -> void:

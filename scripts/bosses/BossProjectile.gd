@@ -14,7 +14,8 @@ var _age: float = 0.0
 
 
 func _ready() -> void:
-	set_collision_layer_value(1, false)
+	collision_layer = 0
+	collision_mask = 0
 	set_collision_mask_value(1, true)  # despawn against world geometry
 	set_collision_mask_value(2, true)  # hit the player
 	body_entered.connect(_on_body_entered)

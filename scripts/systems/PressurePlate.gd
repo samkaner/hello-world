@@ -8,7 +8,8 @@ var _active: bool = false
 
 
 func _ready() -> void:
-	set_collision_layer_value(1, false)
+	collision_layer = 0
+	collision_mask = 0
 	set_collision_mask_value(9, true)  # pushable_block
 	body_entered.connect(_on_body_entered)
 
