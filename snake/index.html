@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#bfe3a0" />
+  <meta name="description" content="Beaver Chase — a cute Meerca-Chase-inspired snake. Steer a bucktoothed beaver, chomp goodies to grow your tail, and survive 30-second woodland levels." />
+  <title>Beaver Chase 🦫</title>
+
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Beaver Chase" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%23bfe3a0'/%3E%3Cellipse cx='50' cy='54' rx='30' ry='26' fill='%23a9713f'/%3E%3Ccircle cx='40' cy='30' r='9' fill='%237a4a24'/%3E%3Ccircle cx='60' cy='30' r='9' fill='%237a4a24'/%3E%3Ccircle cx='40' cy='48' r='5' fill='%23241a12'/%3E%3Ccircle cx='60' cy='48' r='5' fill='%23241a12'/%3E%3Crect x='42' y='60' width='7' height='16' rx='2' fill='white'/%3E%3Crect x='51' y='60' width='7' height='16' rx='2' fill='white'/%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="game-wrap">
+    <canvas id="game"></canvas>
+
+    <!-- HUD -->
+    <div id="hud">
+      <div class="hud-item"><span class="hud-label">SCORE</span><span id="score">0</span></div>
+      <div class="hud-item"><span class="hud-label">LEVEL</span><span id="level">1</span></div>
+      <div class="hud-item"><span class="hud-label">LIVES</span><span id="lives">♥♥♥</span></div>
+      <div class="hud-item hud-best"><span class="hud-label">BEST</span><span id="best">0</span></div>
+      <div id="timebar"><div id="timefill"></div></div>
+    </div>
+
+    <!-- D-pad (touch) -->
+    <div id="dpad" class="hidden">
+      <button data-dir="up" aria-label="Up">▲</button>
+      <button data-dir="left" aria-label="Left">◀</button>
+      <button data-dir="right" aria-label="Right">▶</button>
+      <button data-dir="down" aria-label="Down">▼</button>
+    </div>
+
+    <!-- Start menu -->
+    <div id="menu" class="overlay">
+      <div class="panel">
+        <div class="mascot">🦫</div>
+        <h1 class="title">BEAVER<span>CHASE</span></h1>
+        <p class="tagline">Chomp goodies, grow your tail, dodge the rapids.</p>
+        <div class="how">
+          <p>Steer your bucktoothed beaver around the pond. Gobble
+             <b>🪵 🌰 🍓 💎</b> to grow your tail &amp; score, grab
+             <b>specials</b>, and dodge <b>🪨 rocks</b> &amp; <b>🐟 critters</b>.
+             Each level is a <b>30-second</b> dash — survive to the next!</p>
+          <ul class="controls">
+            <li><b>Arrow keys / WASD</b> or <b>swipe</b> — steer</li>
+            <li><b>P</b> — pause &middot; <b>M</b> — mute</li>
+          </ul>
+        </div>
+        <button id="start-btn" class="btn">PLAY 🦫</button>
+        <div class="peek">
+          <div class="peek-title">🏆 Top beavers</div>
+          <ol id="lb-peek" class="lb"></ol>
+        </div>
+        <p class="back"><a href="../">← Cloud Arcade</a></p>
+      </div>
+    </div>
+
+    <!-- Pause / message -->
+    <div id="message" class="overlay hidden">
+      <div class="panel small">
+        <h2 id="msg-title" class="msg-title">Paused</h2>
+        <p id="msg-sub" class="msg-sub"></p>
+        <p class="hint2">Press <b>P</b> to resume</p>
+      </div>
+    </div>
+
+    <!-- Game over + leaderboard -->
+    <div id="gameover" class="overlay hidden">
+      <div class="panel">
+        <div class="mascot">🦫💫</div>
+        <h2 class="msg-title">Game Over</h2>
+        <p class="final">Score <b id="final-score">0</b></p>
+        <p id="final-msg" class="msg-sub"></p>
+        <div id="save-row" class="save-row">
+          <input id="initials" maxlength="3" placeholder="BVR" aria-label="Your initials" autocomplete="off" />
+          <button id="save-score" class="btn small-btn">Save score</button>
+        </div>
+        <ol id="lb-list" class="lb"></ol>
+        <button id="again" class="btn">Play again 🦫</button>
+        <p class="back"><a href="../">← Cloud Arcade</a></p>
+      </div>
+    </div>
+
+    <button id="pause-btn" class="icon-btn hidden" aria-label="Pause">&#10073;&#10073;</button>
+    <button id="sound-btn" class="icon-btn" aria-label="Mute">🔊</button>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

@@ -55,15 +55,28 @@ window.GAMES = [
   // ----- Coming soon (placeholders that prove the library is extensible) -----
   {
     id: "snake",
-    title: "Snake",
-    emoji: "🐍",
-    tagline: "The slithery classic, reimagined.",
-    description: "A fresh, cuddly spin on Snake is on the way to the arcade.",
+    title: "Beaver Chase",
+    emoji: "🦫",
+    tagline: "A cuddly, Neopets-flavored snake.",
+    description:
+      "Steer a bucktoothed beaver around the pond, chomping 🪵 logs, 🌰 acorns, " +
+      "🍓 berries and 💎 gems to grow your tail and score. Grab specials, dodge " +
+      "rocks and grumpy fish, and survive snappy 30-second levels of rising " +
+      "chaos. Inspired by the Neopets classic Meerca Chase — now with a beaver.",
     accent: "#7ed957",
     accent2: "#39b54a",
-    status: "soon",
-    tags: ["Arcade", "Classic"],
+    status: "live",
+    playUrl: "./snake/",
+    screenshot: "./snake/screenshot.png",
+    icon: "./snake/icon-512.png",
+    tags: ["Arcade", "Snake", "Retro", "PWA"],
     players: "1 player",
+    installable: true,
+    controls: [
+      ["Arrow keys / WASD", "steer the beaver"],
+      ["Swipe / on-screen D-pad", "steer on mobile"],
+      ["P · M", "pause · mute"],
+    ],
   },
   {
     id: "cloud-runner",
