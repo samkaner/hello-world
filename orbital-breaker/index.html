@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#05060d" />
+  <title>Orbital Breaker</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='18' fill='%2300e5ff'/%3E%3Ccircle cx='82' cy='50' r='8' fill='%23ff3cac'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <div id="game-wrap">
+    <canvas id="game"></canvas>
+
+    <!-- HUD -->
+    <div id="hud">
+      <div class="hud-item"><span class="hud-label">SCORE</span><span id="score">0</span></div>
+      <div class="hud-item"><span class="hud-label">LEVEL</span><span id="level">1</span></div>
+      <div class="hud-item"><span class="hud-label">CORE</span><span id="lives">♥♥♥</span></div>
+      <div class="hud-item hud-best"><span class="hud-label">BEST</span><span id="best">0</span></div>
+    </div>
+
+    <!-- Overlays -->
+    <div id="overlay" class="overlay">
+      <div class="panel">
+        <h1 class="title">ORBITAL<span>BREAKER</span></h1>
+        <p class="tagline">A brick breaker turned inside-out.</p>
+        <div class="how">
+          <p>Your paddle <b>orbits the core</b>. Bricks surround you in rings.
+             The ball dives inward from every direction &mdash; spin to deflect it
+             back out, and don't let it reach the core.</p>
+          <ul class="controls">
+            <li><b>Move mouse / touch</b> &mdash; aim the paddle around the ring</li>
+            <li><b>&larr; &rarr; or A / D</b> &mdash; rotate the paddle</li>
+            <li><b>Space / Click</b> &mdash; launch the ball &middot; pause</li>
+          </ul>
+        </div>
+        <button id="start-btn" class="btn">LAUNCH</button>
+      </div>
+    </div>
+
+    <div id="message" class="overlay hidden">
+      <div class="panel">
+        <h2 id="msg-title" class="msg-title">PAUSED</h2>
+        <p id="msg-sub" class="msg-sub"></p>
+        <button id="msg-btn" class="btn">RESUME</button>
+      </div>
+    </div>
+
+    <div id="hint" class="hint hidden">Press <b>Space</b> or <b>click</b> to launch</div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
