@@ -41,10 +41,16 @@ html, body {
   top: 0; left: 0; right: 0;
   display: flex;
   gap: 26px;
-  padding: 16px 22px;
+  padding: calc(16px + env(safe-area-inset-top)) calc(22px + env(safe-area-inset-right))
+           16px calc(22px + env(safe-area-inset-left));
   pointer-events: none;
   font-variant-numeric: tabular-nums;
   letter-spacing: 1px;
+}
+@media (max-width: 480px) {
+  #hud { gap: 16px; padding-left: calc(14px + env(safe-area-inset-left));
+         padding-right: calc(14px + env(safe-area-inset-right)); }
+  .hud-item span:last-child { font-size: 18px; }
 }
 .hud-item { display: flex; flex-direction: column; line-height: 1.15; }
 .hud-best { margin-left: auto; text-align: right; }
@@ -60,6 +66,30 @@ html, body {
 }
 #lives { color: var(--pink); text-shadow: 0 0 12px rgba(255, 60, 172, 0.6); }
 
+/* ---------- Pause button (touch-friendly) ---------- */
+.icon-btn {
+  position: absolute;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  right: calc(20px + env(safe-area-inset-right));
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 229, 255, 0.5);
+  background: rgba(13, 16, 34, 0.7);
+  color: var(--cyan);
+  font-size: 16px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9;
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.25);
+  transition: transform 0.12s ease, box-shadow 0.2s ease;
+}
+.icon-btn:active { transform: scale(0.92); }
+.icon-btn.hidden { display: none; }
+
 /* ---------- Overlays ---------- */
 .overlay {
   position: absolute;
@@ -71,11 +101,14 @@ html, body {
   backdrop-filter: blur(3px);
   z-index: 10;
   padding: 24px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .overlay.hidden { display: none; }
 
 .panel {
   width: min(460px, 92vw);
+  margin: auto;
   text-align: center;
   padding: 34px 30px 30px;
   border-radius: 20px;
@@ -156,7 +189,7 @@ html, body {
 
 .hint {
   position: absolute;
-  bottom: 26px;
+  bottom: calc(26px + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   font-size: 13px;

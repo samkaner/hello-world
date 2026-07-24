@@ -8,18 +8,31 @@ glowing core**, the bricks surround you in concentric neon rings, and the ball
 can dive inward from *any* direction. Spin to deflect it back out — and never
 let it reach the core.
 
-No build step, no dependencies. Just open `index.html`.
+No build step, no dependencies. It's an installable **Progressive Web App** —
+add it to your phone's home screen and it runs full-screen and offline.
 
 ## ▶️ Play
 
 ```bash
-# from this folder, either just open the file…
-open index.html          # macOS  (use xdg-open on Linux, start on Windows)
-
-# …or serve it locally
+# serve it locally (needed for PWA install + offline to work)
 python3 -m http.server 8000
 # then visit http://localhost:8000
+
+# or just open the file directly for a quick look (no install/offline)
+open index.html          # macOS  (use xdg-open on Linux, start on Windows)
 ```
+
+## 📱 Install as an app
+
+Because it ships a web manifest + service worker, you can install it like a
+native app:
+
+- **iOS Safari** — Share → *Add to Home Screen*
+- **Android Chrome** — menu → *Install app* / *Add to Home Screen*
+- **Desktop Chrome/Edge** — the install icon in the address bar
+
+Once installed it launches standalone (no browser chrome) and works **offline**,
+since the app shell is cached by the service worker.
 
 ## 🎮 Controls
 
@@ -27,10 +40,14 @@ python3 -m http.server 8000
 | --- | --- |
 | Aim the paddle around the ring | **Move mouse** / **touch & drag** |
 | Rotate the paddle | **← →** or **A / D** |
-| Launch the ball · pause | **Space** / **Enter** / **click** |
+| Launch the ball | **Space** / **Enter** / **tap** / **click** |
+| Pause | **P** / the on-screen ❚❚ button |
 
 Where the ball strikes the paddle — and how fast the paddle is sweeping —
 angles the rebound, so you can "steer" the ball toward the bricks you want.
+
+On touch devices, tapping only launches or repositions — it never pauses — so
+use the ❚❚ button (bottom corner) to pause.
 
 ## 🌀 The twist
 
@@ -54,17 +71,25 @@ angles the rebound, so you can "steer" the ball toward the bricks you want.
 - Neon glow aesthetic, particle bursts, screen shake, a core that flushes red
   as danger closes in, and a parallax starfield
 - Best-score saved to `localStorage`
-- Fully responsive & touch-friendly — plays on desktop and mobile
+- Fully responsive & touch-friendly — plays on desktop and mobile, with
+  safe-area insets so the HUD clears notches/rounded corners
+- Installable PWA that runs standalone and offline
 
 ## 🧩 Tech
 
-Plain HTML5 Canvas + vanilla JavaScript + CSS. Three files, zero dependencies:
+Plain HTML5 Canvas + vanilla JavaScript + CSS. Zero dependencies, no build:
 
 ```
 orbital-breaker/
-├── index.html   # markup, HUD, overlays
-├── style.css    # neon UI / overlay styling
-└── game.js      # engine: physics, rendering, game loop
+├── index.html            # markup, HUD, overlays, PWA meta
+├── style.css             # neon UI / overlay styling, safe-area insets
+├── game.js               # engine: physics, rendering, game loop, SW register
+├── manifest.webmanifest  # PWA manifest (name, icons, standalone)
+├── sw.js                 # service worker — offline app-shell cache
+├── icon-192.png          # app icons
+├── icon-512.png
+├── icon-maskable-512.png # maskable icon (Android adaptive)
+└── apple-touch-icon.png  # iOS home-screen icon
 ```
 
 Enjoy defending the core. 🔮

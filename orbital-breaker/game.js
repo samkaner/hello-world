@@ -88,7 +88,13 @@
     const t = e.touches[0];
     paddle.target = pointerAngle(t.clientX, t.clientY);
     paddle.angle = paddle.target;
-    primaryAction();
+    // On touch, a tap only launches — it never pauses. Repositioning the
+    // paddle by tapping/dragging should not interrupt play; use the button.
+    if (G.state === State.READY) {
+      launchStuck();
+      G.state = State.PLAY;
+      showHint(false);
+    }
   }, { passive: false });
   canvas.addEventListener("touchmove", (e) => {
     e.preventDefault();
@@ -120,10 +126,12 @@
     msgBtn: document.getElementById("msg-btn"),
     startBtn: document.getElementById("start-btn"),
     hint: document.getElementById("hint"),
+    pauseBtn: document.getElementById("pause-btn"),
   };
   el.best.textContent = G.best;
 
   el.startBtn.addEventListener("click", startGame);
+  el.pauseBtn.addEventListener("click", (e) => { e.preventDefault(); togglePause(); });
   el.msgBtn.addEventListener("click", () => {
     if (G.state === State.PAUSE) togglePause();
     else if (G.state === State.LEVELUP) nextLevel();
@@ -526,6 +534,9 @@
 
   function update(dt) {
     G.time += dt;
+    // pause button is only meaningful while a round is in progress
+    const inRound = G.state === State.READY || G.state === State.PLAY || G.state === State.PAUSE;
+    el.pauseBtn.classList.toggle("hidden", !inRound);
     if (G.shake > 0) G.shake *= 0.86;
     if (G.expandT > 0) { G.expandT -= dt; if (G.expandT <= 0) paddle.half = BASE_HALF; }
     if (G.slowT > 0) G.slowT -= dt;
@@ -782,4 +793,12 @@
   resize();
   updateHud();
   requestAnimationFrame(loop);
+
+  // Register the service worker so the game installs & runs offline as a PWA.
+  // (No-op under file://; needs to be served over http/https.)
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    });
+  }
 })();
