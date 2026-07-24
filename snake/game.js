@@ -447,10 +447,48 @@
     ctx.beginPath(); ctx.ellipse(0, ry * 1.2, rx, ry, 0, 0, 7); ctx.fill();
   }
 
+  // ---------- SVG sprite: crafted vector beaver, stamped into the canvas ----------
+  // Vector art (markup) rasterizes crisply at any size/DPR. Faces +x (forward).
+  const BEAVER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-60 -60 120 120" width="256" height="256">
+ <defs>
+  <radialGradient id="fur" cx="-18" cy="-20" r="70" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#cd9459"/><stop offset="1" stop-color="#985f31"/></radialGradient>
+  <radialGradient id="rim" cx="0" cy="0" r="52" gradientUnits="userSpaceOnUse"><stop offset="0.68" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#5b3a1e" stop-opacity="0.32"/></radialGradient>
+  <linearGradient id="muz" x1="0" y1="-35" x2="0" y2="35" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#f5e0bf"/><stop offset="1" stop-color="#e4c497"/></linearGradient>
+ </defs>
+ <g stroke="#6e4423" stroke-width="4" stroke-linejoin="round"><circle cx="-27" cy="-33" r="15" fill="#8a5a2f"/><circle cx="27" cy="-33" r="15" fill="#8a5a2f"/></g>
+ <circle cx="-27" cy="-32" r="7" fill="#e79bb0"/><circle cx="27" cy="-32" r="7" fill="#e79bb0"/>
+ <ellipse cx="0" cy="0" rx="51" ry="46" fill="url(#fur)" stroke="#6e4423" stroke-width="4"/>
+ <ellipse cx="0" cy="0" rx="51" ry="46" fill="url(#rim)"/>
+ <ellipse cx="-16" cy="-18" rx="20" ry="13" fill="#fff" opacity="0.18"/>
+ <circle cx="-6" cy="29" r="10" fill="#ff9bb0" opacity="0.5"/><circle cx="-6" cy="-29" r="10" fill="#ff9bb0" opacity="0.5"/>
+ <ellipse cx="24" cy="0" rx="31" ry="35" fill="url(#muz)"/>
+ <ellipse cx="20" cy="-11" rx="19" ry="11" fill="#fff" opacity="0.25"/>
+ <ellipse cx="2" cy="20" rx="7.5" ry="9.5" fill="#2a1d12"/><ellipse cx="2" cy="-20" rx="7.5" ry="9.5" fill="#2a1d12"/>
+ <circle cx="5" cy="16.5" r="3" fill="#fff"/><circle cx="5" cy="-23.5" r="3" fill="#fff"/>
+ <path d="M44 -7 L53 0 L44 7 Z" fill="#4a2f1c"/><circle cx="46.5" cy="-2.5" r="2" fill="#fff" opacity="0.5"/>
+ <rect x="42" y="-10.5" width="21" height="6" rx="3" fill="#e79bb0"/>
+ <rect x="44" y="-6.5" width="9" height="22" rx="3" fill="#fff" stroke="#e6c9a0" stroke-width="0.8"/>
+ <rect x="54" y="-6.5" width="9" height="22" rx="3" fill="#fff" stroke="#e6c9a0" stroke-width="0.8"/>
+ <g stroke="#6e4423" stroke-width="1.4" opacity="0.5" stroke-linecap="round"><line x1="30" y1="10" x2="52" y2="6"/><line x1="30" y1="16" x2="52" y2="18"/><line x1="30" y1="-10" x2="52" y2="-6"/><line x1="30" y1="-16" x2="52" y2="-18"/></g>
+</svg>`;
+  const beaverImg = new Image();
+  let beaverReady = false;
+  beaverImg.onload = () => { beaverReady = true; };
+  beaverImg.src = "data:image/svg+xml;charset=utf8," + encodeURIComponent(BEAVER_SVG);
+
   function drawBeaverHead(cx2, cy2, ang, r) {
     ctx.save();
     ctx.translate(cx2, cy2);
     groundShadow(r * 0.95, r * 0.4);
+    // Preferred path: stamp the crafted SVG sprite (crisp at any DPR).
+    if (beaverReady) {
+      ctx.rotate(ang);
+      const w = r * 2.4;
+      ctx.drawImage(beaverImg, -w / 2, -w / 2, w, w);
+      ctx.restore();
+      return;
+    }
+    // Fallback (until the sprite loads): the hand-coded beaver.
     ctx.rotate(ang);
     const OL = "#6e4423";
     ctx.lineJoin = "round"; ctx.lineCap = "round";
