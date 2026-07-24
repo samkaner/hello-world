@@ -3,19 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#05060d" />
-  <meta name="description" content="A brick breaker turned inside-out: your paddle orbits a glowing core while bricks surround you in neon rings." />
-  <title>Orbital Breaker</title>
+  <meta name="theme-color" content="#cbeeff" />
+  <meta name="description" content="A cute cloud take on brick breaker: your fluffy paddle orbits a little cloud friend while pastel bricks surround you in rings." />
+  <title>Orbital Breaker ☁️</title>
 
   <!-- PWA / installable web app -->
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Orbital" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='18' fill='%2300e5ff'/%3E%3Ccircle cx='82' cy='50' r='8' fill='%23ff3cac'/%3E%3C/svg%3E" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cellipse cx='30' cy='52' rx='12' ry='20' fill='white'/%3E%3Cellipse cx='70' cy='52' rx='12' ry='20' fill='white'/%3E%3Ccircle cx='50' cy='56' r='26' fill='white'/%3E%3Ccircle cx='34' cy='40' r='16' fill='white'/%3E%3Ccircle cx='66' cy='40' r='16' fill='white'/%3E%3Ccircle cx='42' cy='52' r='3' fill='%234a5a72'/%3E%3Ccircle cx='58' cy='52' r='3' fill='%234a5a72'/%3E%3Ccircle cx='36' cy='58' r='4' fill='%23ff9ec4'/%3E%3Ccircle cx='64' cy='58' r='4' fill='%23ff9ec4'/%3E%3C/svg%3E" />
 
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -27,26 +27,26 @@
     <div id="hud">
       <div class="hud-item"><span class="hud-label">SCORE</span><span id="score">0</span></div>
       <div class="hud-item"><span class="hud-label">LEVEL</span><span id="level">1</span></div>
-      <div class="hud-item"><span class="hud-label">CORE</span><span id="lives">♥♥♥</span></div>
+      <div class="hud-item"><span class="hud-label">CLOUD</span><span id="lives">♥♥♥</span></div>
       <div class="hud-item hud-best"><span class="hud-label">BEST</span><span id="best">0</span></div>
     </div>
 
     <!-- Overlays -->
     <div id="overlay" class="overlay">
       <div class="panel">
-        <h1 class="title">ORBITAL<span>BREAKER</span></h1>
-        <p class="tagline">A brick breaker turned inside-out.</p>
+        <h1 class="title">ORBITAL<span>BREAKER ☁️</span></h1>
+        <p class="tagline">A cuddly cloud take on brick breaker.</p>
         <div class="how">
-          <p>Your paddle <b>orbits the core</b>. Bricks surround you in rings.
-             The ball dives inward from every direction &mdash; spin to deflect it
-             back out, and don't let it reach the core.</p>
+          <p>Your fluffy paddle <b>orbits a little cloud friend</b>. Pastel bricks
+             surround you in rings, and the ball drifts inward from every direction
+             &mdash; spin to bop it back out and keep your cloud safe &amp; cozy. 🩵</p>
           <ul class="controls">
-            <li><b>Move mouse / touch</b> &mdash; aim the paddle around the ring</li>
+            <li><b>Move mouse / touch</b> &mdash; float the paddle around the ring</li>
             <li><b>&larr; &rarr; or A / D</b> &mdash; rotate the paddle</li>
-            <li><b>Space / Click</b> &mdash; launch the ball &middot; pause</li>
+            <li><b>Space / tap</b> &mdash; launch the ball &middot; <b>M</b> &mdash; mute</li>
           </ul>
         </div>
-        <button id="start-btn" class="btn">LAUNCH</button>
+        <button id="start-btn" class="btn">PLAY ☁️</button>
       </div>
     </div>
 
@@ -58,10 +58,11 @@
       </div>
     </div>
 
-    <div id="hint" class="hint hidden">Tap / <b>click</b> or press <b>Space</b> to launch</div>
+    <div id="hint" class="hint hidden">Tap / <b>click</b> or press <b>Space</b> to launch ☁️</div>
 
-    <!-- Thumb-reachable pause button (mainly for touch) -->
+    <!-- Thumb-reachable buttons (mainly for touch) -->
     <button id="pause-btn" class="icon-btn hidden" aria-label="Pause">&#10073;&#10073;</button>
+    <button id="sound-btn" class="icon-btn" aria-label="Mute">🔊</button>
   </div>
 
   <script src="game.js"></script>

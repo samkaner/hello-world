@@ -1,13 +1,14 @@
 /* Orbital Breaker — service worker
    Caches the app shell so the game installs and runs offline. */
 
-const CACHE = "orbital-breaker-v1";
+const CACHE = "orbital-breaker-v2";
 const ASSETS = [
   "./",
   "./index.html",
   "./style.css",
   "./game.js",
   "./manifest.webmanifest",
+  "./screenshot.png",
   "./icon-192.png",
   "./icon-512.png",
   "./icon-maskable-512.png",

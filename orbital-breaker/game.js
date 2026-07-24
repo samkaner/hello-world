@@ -18,6 +18,96 @@
     return a;
   };
 
+  // ---------- Sound (cute little WebAudio chimes) ----------
+  // No audio files — every sound is synthesized from soft sine/triangle
+  // notes on a pentatonic scale, with gentle attacks so nothing is harsh.
+  const Sound = {
+    ctx: null,
+    master: null,
+    enabled: localStorage.getItem("ob_mute") !== "1",
+    ensure() {
+      if (this.ctx) return;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      try {
+        this.ctx = new AC();
+        this.master = this.ctx.createGain();
+        this.master.gain.value = 0.5;
+        this.master.connect(this.ctx.destination);
+      } catch (e) { this.ctx = null; }
+    },
+    resume() {
+      this.ensure();
+      if (this.ctx && this.ctx.state === "suspended") this.ctx.resume();
+    },
+    setEnabled(on) {
+      this.enabled = on;
+      localStorage.setItem("ob_mute", on ? "0" : "1");
+    },
+    // one soft, rounded note
+    note(freq, t0, dur, opts) {
+      if (!this.ctx) return;
+      const { type = "sine", gain = 0.3, glideTo = null } = opts || {};
+      const o = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(freq, t0);
+      if (glideTo) o.frequency.exponentialRampToValueAtTime(glideTo, t0 + dur);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(gain, t0 + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g); g.connect(this.master);
+      o.start(t0);
+      o.stop(t0 + dur + 0.03);
+    },
+    play(name) {
+      if (!this.enabled) return;
+      this.ensure();
+      if (!this.ctx) return;
+      if (this.ctx.state === "suspended") this.ctx.resume();
+      const t = this.ctx.currentTime;
+      // C5 D5 E5 G5 A5 C6 — a sweet, always-consonant scale
+      const P = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];
+      const r = () => P[(Math.random() * P.length) | 0];
+      switch (name) {
+        case "hit":
+          this.note(r(), t, 0.13, { type: "triangle", gain: 0.2 });
+          break;
+        case "break": {
+          const f = r();
+          this.note(f, t, 0.16, { type: "triangle", gain: 0.22 });
+          this.note(f * 2, t + 0.02, 0.12, { type: "sine", gain: 0.09 });
+          break;
+        }
+        case "bounce":
+          this.note(392, t, 0.15, { type: "sine", gain: 0.26, glideTo: 523.25 });
+          break;
+        case "powerup":
+          [523.25, 659.25, 783.99, 1046.5].forEach((f, i) =>
+            this.note(f, t + i * 0.06, 0.2, { type: "sine", gain: 0.24 }));
+          break;
+        case "life":
+          this.note(659.25, t, 0.16, { type: "sine", gain: 0.28 });
+          this.note(987.77, t + 0.09, 0.24, { type: "sine", gain: 0.28 });
+          break;
+        case "lose":
+          this.note(523.25, t, 0.5, { type: "sine", gain: 0.28, glideTo: 261.63 });
+          break;
+        case "level":
+          [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) =>
+            this.note(f, t + i * 0.09, 0.28, { type: "triangle", gain: 0.24 }));
+          break;
+        case "launch":
+          this.note(783.99, t, 0.12, { type: "sine", gain: 0.26, glideTo: 1318.5 });
+          break;
+        case "start":
+          [659.25, 783.99, 1046.5].forEach((f, i) =>
+            this.note(f, t + i * 0.08, 0.24, { type: "sine", gain: 0.24 }));
+          break;
+      }
+    },
+  };
+
   // ---------- Canvas ----------
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
@@ -79,12 +169,14 @@
   });
   canvas.addEventListener("mousedown", (e) => {
     e.preventDefault();
+    Sound.resume();
     usingMouse = true;
     paddle.target = pointerAngle(e.clientX, e.clientY);
     primaryAction();
   });
   canvas.addEventListener("touchstart", (e) => {
     e.preventDefault();
+    Sound.resume();
     const t = e.touches[0];
     paddle.target = pointerAngle(t.clientX, t.clientY);
     paddle.angle = paddle.target;
@@ -105,8 +197,9 @@
   window.addEventListener("keydown", (e) => {
     if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") { keys.left = true; usingMouse = false; }
     if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") { keys.right = true; usingMouse = false; }
-    if (e.code === "Space" || e.key === "Enter") { e.preventDefault(); primaryAction(); }
+    if (e.code === "Space" || e.key === "Enter") { e.preventDefault(); Sound.resume(); primaryAction(); }
     if (e.key === "p" || e.key === "P") togglePause();
+    if (e.key === "m" || e.key === "M") toggleSound();
   });
   window.addEventListener("keyup", (e) => {
     if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") keys.left = false;
@@ -127,11 +220,24 @@
     startBtn: document.getElementById("start-btn"),
     hint: document.getElementById("hint"),
     pauseBtn: document.getElementById("pause-btn"),
+    soundBtn: document.getElementById("sound-btn"),
   };
   el.best.textContent = G.best;
 
-  el.startBtn.addEventListener("click", startGame);
-  el.pauseBtn.addEventListener("click", (e) => { e.preventDefault(); togglePause(); });
+  el.startBtn.addEventListener("click", () => { Sound.resume(); startGame(); });
+  el.pauseBtn.addEventListener("click", (e) => { e.preventDefault(); Sound.resume(); togglePause(); });
+  el.soundBtn.addEventListener("click", (e) => { e.preventDefault(); Sound.resume(); toggleSound(); });
+
+  function updateSoundBtn() {
+    el.soundBtn.textContent = Sound.enabled ? "🔊" : "🔇";
+    el.soundBtn.setAttribute("aria-label", Sound.enabled ? "Mute" : "Unmute");
+  }
+  function toggleSound() {
+    Sound.setEnabled(!Sound.enabled);
+    updateSoundBtn();
+    if (Sound.enabled) Sound.play("hit");
+  }
+  updateSoundBtn();
   el.msgBtn.addEventListener("click", () => {
     if (G.state === State.PAUSE) togglePause();
     else if (G.state === State.LEVELUP) nextLevel();
@@ -153,7 +259,7 @@
     cy = H / 2;
     maxR = Math.min(W, H) / 2 - 16;
     computeLayout();
-    buildStars();
+    buildScenery();
 
     // rescale dynamic objects so a resize doesn't warp play
     if (oldMax > 0) {
@@ -173,24 +279,37 @@
   }
   window.addEventListener("resize", resize);
 
-  // ---------- Starfield ----------
-  let stars = [];
-  function buildStars() {
-    stars = [];
-    const n = Math.floor((W * H) / 9000);
+  // ---------- Scenery: drifting clouds + twinkling sparkles ----------
+  let sparkles = [];
+  let clouds = [];
+  function buildScenery() {
+    sparkles = [];
+    const n = Math.floor((W * H) / 13000);
     for (let i = 0; i < n; i++) {
-      stars.push({
+      sparkles.push({
         x: Math.random() * W,
         y: Math.random() * H,
-        r: Math.random() * 1.3 + 0.2,
-        a: Math.random() * 0.6 + 0.15,
+        r: Math.random() * 1.6 + 0.6,
+        a: Math.random() * 0.5 + 0.25,
         tw: Math.random() * TAU,
+      });
+    }
+    clouds = [];
+    const nc = Math.max(4, Math.floor(W / 240));
+    for (let i = 0; i < nc; i++) {
+      clouds.push({
+        x: Math.random() * (W + 240) - 120,
+        y: Math.random() * H,
+        s: Math.random() * 0.7 + 0.55,
+        spd: Math.random() * 9 + 4,       // px/sec, gentle drift
+        a: Math.random() * 0.22 + 0.12,
       });
     }
   }
 
   // ---------- Level building ----------
-  const RING_HUES = [188, 268, 320, 44, 150, 210];
+  // soft pastel candy hues: sky-blue, mint, lavender, pink, butter, aqua
+  const RING_HUES = [203, 165, 260, 335, 48, 190];
 
   function buildLevel(level) {
     G.bricks = [];
@@ -253,6 +372,7 @@
         b.stuck = false;
         b.vx = Math.cos(paddle.angle) * G.speed;
         b.vy = Math.sin(paddle.angle) * G.speed;
+        Sound.play("launch");
       }
     }
   }
@@ -262,14 +382,34 @@
     for (let i = 0; i < count; i++) {
       const a = Math.random() * TAU;
       const sp = (Math.random() * 2.4 + 0.6) * (power || 1);
+      const heart = Math.random() < 0.25;
       G.particles.push({
         x, y,
         vx: Math.cos(a) * sp,
         vy: Math.sin(a) * sp,
-        r: Math.random() * 2.4 + 1,
+        r: Math.random() * 2.4 + 1.4,
         life: 1,
         decay: Math.random() * 0.03 + 0.02,
         hue,
+        shape: heart ? "heart" : "dot",
+      });
+    }
+  }
+
+  // a shower of little hearts (for power-up pickups)
+  function heartBurst(x, y, count, hue) {
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * TAU;
+      const sp = Math.random() * 2.6 + 0.8;
+      G.particles.push({
+        x, y,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp - 0.6,
+        r: Math.random() * 2.6 + 2,
+        life: 1,
+        decay: Math.random() * 0.02 + 0.014,
+        hue: hue == null ? 335 : hue,
+        shape: "heart",
       });
     }
   }
@@ -280,21 +420,23 @@
 
   // ---------- Powerups ----------
   const PU_TYPES = [
-    { t: "expand", c: "#00e5ff", label: "WIDE" },
-    { t: "slow", c: "#8a5cff", label: "SLOW" },
-    { t: "multi", c: "#ff3cac", label: "MULTI" },
-    { t: "life", c: "#4dff9e", label: "+CORE" },
+    { t: "expand", c: "#5fbff9", hue: 205, icon: "🎀", label: "FLUFFY" },
+    { t: "slow", c: "#b39dff", hue: 260, icon: "💤", label: "SLEEPY" },
+    { t: "multi", c: "#8fd6ff", hue: 200, icon: "☁️", label: "POOF" },
+    { t: "life", c: "#ff9ec4", hue: 335, icon: "💗", label: "LOVE" },
   ];
   function maybeDropPowerup(x, y) {
-    if (Math.random() > 0.11) return;
+    if (Math.random() > 0.13) return;
     const angle = Math.atan2(y - cy, x - cx);
     const dist = Math.hypot(x - cx, y - cy);
     const def = PU_TYPES[Math.floor(Math.random() * PU_TYPES.length)];
-    G.powerups.push({ angle, dist, x, y, type: def.t, color: def.c, label: def.label });
+    G.powerups.push({ angle, dist, x, y, type: def.t, color: def.c, hue: def.hue, icon: def.icon, label: def.label });
   }
   function applyPowerup(p) {
-    floatText(PU_TYPES.find((d) => d.t === p.type).label, p.x, p.y, p.color);
-    burst(p.x, p.y, 190, 16, 1.4);
+    const def = PU_TYPES.find((d) => d.t === p.type);
+    floatText(def.icon + " " + def.label, p.x, p.y, p.color);
+    heartBurst(p.x, p.y, 14, p.hue);
+    Sound.play(p.type === "life" ? "life" : "powerup");
     if (p.type === "expand") { G.expandT = 8; paddle.half = EXPAND_HALF; }
     else if (p.type === "slow") { G.slowT = 7; }
     else if (p.type === "life") { G.lives = Math.min(6, G.lives + 1); updateHud(); }
@@ -321,6 +463,7 @@
     G.lives = 3;
     beginLevel();
     hideOverlays();
+    Sound.play("start");
   }
   function beginLevel() {
     G.speed = 4.6 * (maxR / 340) * Math.pow(1.06, G.level - 1);
@@ -344,7 +487,8 @@
   function loseLife() {
     G.lives--;
     updateHud();
-    G.shake = 18;
+    G.shake = 14;
+    Sound.play("lose");
     if (G.lives <= 0) {
       gameOver();
     } else {
@@ -358,14 +502,15 @@
   function gameOver() {
     G.state = State.DEAD;
     saveBest();
-    showMessage("CORE BREACHED", `You reached level ${G.level} with ${G.score} pts.`, "RETRY");
+    showMessage("Oh nooo… ☁️💧", `You floated to level ${G.level} with ${G.score} points.`, "Try again 🩵");
   }
   function levelComplete() {
     G.state = State.LEVELUP;
     G.score += 250;
     saveBest();
     updateHud();
-    showMessage("RING CLEARED", `Level ${G.level} complete &mdash; +250 bonus.`, "NEXT WAVE");
+    Sound.play("level");
+    showMessage("Yay! Ring cleared ✨", `Level ${G.level} done &mdash; +250 treats!`, "Next cloud ☁️");
   }
   function saveBest() {
     if (G.score > G.best) {
@@ -387,7 +532,7 @@
   function togglePause() {
     if (G.state === State.PLAY) {
       G.state = State.PAUSE;
-      showMessage("PAUSED", "", "RESUME");
+      showMessage("Nap time 💤", "", "Resume 🩵");
     } else if (G.state === State.PAUSE) {
       G.state = State.PLAY;
       hideOverlays();
@@ -485,11 +630,13 @@
           br.alive = false;
           G.score += 10 * G.level;
           burst(b.x, b.y, br.hue, 10, 1.2);
+          Sound.play("break");
           maybeDropPowerup((r0 + r1) / 2 * Math.cos(br.a0 + br.width / 2) + cx,
                            (r0 + r1) / 2 * Math.sin(br.a0 + br.width / 2) + cy);
         } else {
           G.score += 3 * G.level;
           burst(b.x, b.y, br.hue, 4, 0.7);
+          Sound.play("hit");
         }
         // nudge out of brick along the (now reflected) velocity
         const nm = Math.hypot(b.vx, b.vy) || 1;
@@ -515,7 +662,8 @@
         const nd = R_paddle + b.r + 1.5;
         b.x = cx + nnx * nd; b.y = cy + nny * nd;
         dist = nd;
-        burst(b.x, b.y, 190, 6, 0.8);
+        burst(b.x, b.y, 205, 6, 0.8);
+        Sound.play("bounce");
       }
     }
 
@@ -534,6 +682,11 @@
 
   function update(dt) {
     G.time += dt;
+    // gently drift the clouds across the sky (always, even on menus)
+    for (const c of clouds) {
+      c.x += c.spd * dt;
+      if (c.x - 140 * c.s > W) c.x = -140 * c.s;
+    }
     // pause button is only meaningful while a round is in progress
     const inRound = G.state === State.READY || G.state === State.PLAY || G.state === State.PAUSE;
     el.pauseBtn.classList.toggle("hidden", !inRound);
@@ -607,6 +760,117 @@
     ctx.closePath();
   }
 
+  // a fluffy puff = a few overlapping circles
+  function drawPuff(x, y, r, fill) {
+    ctx.fillStyle = fill;
+    const lobes = [
+      [0, 0.15, 1], [-0.75, 0.28, 0.68], [0.75, 0.28, 0.68],
+      [-0.4, -0.35, 0.62], [0.4, -0.35, 0.62],
+    ];
+    ctx.beginPath();
+    for (const [dx, dy, s] of lobes) {
+      ctx.moveTo(x + dx * r + r * s, y + dy * r);
+      ctx.arc(x + dx * r, y + dy * r, r * s, 0, TAU);
+    }
+    ctx.fill();
+  }
+
+  function drawHeart(x, y, s, fill) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s / 16, s / 16);
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.moveTo(0, 4);
+    ctx.bezierCurveTo(-8, -4, -6, -12, 0, -6);
+    ctx.bezierCurveTo(6, -12, 8, -4, 0, 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // the cloud friend at the center — the thing you protect
+  function drawCloudFriend(danger) {
+    const bob = Math.sin(G.time * 2) * (R_core * 0.05);
+    const u = R_core / 24; // unit scale (design space ~24px radius)
+    ctx.save();
+    ctx.translate(cx, cy + bob);
+    ctx.scale(u, u);
+
+    // worried tint when the ball closes in
+    const bodyTint = danger > 0.55 ? "#eef4ff" : "#ffffff";
+
+    // floppy ears
+    ctx.fillStyle = "#ffffff";
+    ctx.strokeStyle = "rgba(150,200,240,0.55)";
+    ctx.lineWidth = 1.4;
+    for (const sgn of [-1, 1]) {
+      ctx.save();
+      ctx.translate(sgn * 20, -2);
+      ctx.rotate(sgn * 0.5);
+      ctx.beginPath();
+      ctx.ellipse(0, 6, 6.5, 12, 0, 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // fluffy body (soft blue outline via shadow)
+    ctx.shadowColor = "rgba(140,195,240,0.7)";
+    ctx.shadowBlur = 6;
+    drawPuff(0, 1, 15, bodyTint);
+    ctx.shadowBlur = 0;
+
+    // blush cheeks
+    ctx.fillStyle = "rgba(255,155,190,0.7)";
+    ctx.beginPath();
+    ctx.arc(-11, 5, 3.4, 0, TAU);
+    ctx.arc(11, 5, 3.4, 0, TAU);
+    ctx.fill();
+
+    // eyes
+    ctx.fillStyle = "#4a5a72";
+    if (danger > 0.55) {
+      // worried: little upside-down U eyes
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#4a5a72";
+      for (const sgn of [-1, 1]) {
+        ctx.beginPath();
+        ctx.arc(sgn * 6, 0, 2.4, Math.PI * 1.05, Math.PI * 1.95);
+        ctx.stroke();
+      }
+    } else {
+      for (const sgn of [-1, 1]) {
+        ctx.beginPath();
+        ctx.ellipse(sgn * 6, 0, 1.9, 2.7, 0, 0, TAU);
+        ctx.fill();
+      }
+    }
+    // eye sparkle
+    if (danger <= 0.55) {
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      for (const sgn of [-1, 1]) {
+        ctx.beginPath();
+        ctx.arc(sgn * 6 - 0.6, -0.9, 0.7, 0, TAU);
+        ctx.fill();
+      }
+    }
+
+    // mouth
+    ctx.strokeStyle = "#4a5a72";
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    if (danger > 0.55) {
+      ctx.arc(0, 8.5, 1.8, 0, TAU); // worried little "o"
+    } else {
+      ctx.moveTo(-2, 7);
+      ctx.quadraticCurveTo(0, 9.2, 2, 7); // gentle smile
+    }
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
   function render() {
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     // shake
@@ -615,161 +879,168 @@
       ctx.translate((Math.random() - 0.5) * s, (Math.random() - 0.5) * s);
     }
 
-    // background
-    const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR * 1.3);
-    bg.addColorStop(0, "#0a1030");
-    bg.addColorStop(0.55, "#070a1c");
-    bg.addColorStop(1, "#04050d");
+    // sky background — soft light-blue gradient
+    const bg = ctx.createLinearGradient(0, -30, 0, H + 30);
+    bg.addColorStop(0, "#cbeeff");
+    bg.addColorStop(0.5, "#dff4ff");
+    bg.addColorStop(1, "#eafaff");
     ctx.fillStyle = bg;
     ctx.fillRect(-30, -30, W + 60, H + 60);
 
-    // stars
-    for (const st of stars) {
-      const tw = 0.6 + 0.4 * Math.sin(G.time * 2 + st.tw);
+    // fluffy drifting clouds
+    for (const c of clouds) {
+      drawPuff(c.x, c.y, 26 * c.s, `rgba(255,255,255,${c.a})`);
+    }
+
+    // twinkling sparkles
+    for (const st of sparkles) {
+      const tw = 0.55 + 0.45 * Math.sin(G.time * 2 + st.tw);
       ctx.globalAlpha = st.a * tw;
-      ctx.fillStyle = "#bcd2ff";
+      ctx.fillStyle = "#ffffff";
       ctx.beginPath();
       ctx.arc(st.x, st.y, st.r, 0, TAU);
       ctx.fill();
     }
     ctx.globalAlpha = 1;
 
-    // outer wall ring
-    ctx.strokeStyle = "rgba(138,92,255,0.35)";
-    ctx.lineWidth = 2;
+    // outer wall ring — a soft dotted halo
+    ctx.strokeStyle = "rgba(120,180,240,0.45)";
+    ctx.lineWidth = 3;
+    ctx.setLineDash([2, 10]);
+    ctx.lineCap = "round";
     ctx.beginPath();
     ctx.arc(cx, cy, R_wall, 0, TAU);
     ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.lineCap = "butt";
 
-    // bricks
+    // bricks — pastel candy tiles with rounded, glossy tops
     ctx.lineJoin = "round";
     for (const b of G.bricks) {
       if (!b.alive) continue;
       const r0 = b.fr0 * maxR, r1 = b.fr1 * maxR;
       const a0 = b.a0, a1 = b.a0 + b.width;
-      const light = b.hp / b.maxHp; // brighter = healthier
-      const l = 42 + light * 16 + (b.hit > 0 ? 30 : 0);
-      const sat = 85;
-      ctx.fillStyle = `hsl(${b.hue}, ${sat}%, ${l}%)`;
-      ctx.shadowColor = `hsl(${b.hue}, ${sat}%, 60%)`;
-      ctx.shadowBlur = 14;
+      const health = b.hp / b.maxHp;
+      const l = 80 - (1 - health) * 8 + (b.hit > 0 ? 10 : 0);
+      ctx.fillStyle = `hsl(${b.hue}, 72%, ${l}%)`;
+      ctx.shadowColor = `hsla(${b.hue}, 70%, 72%, 0.9)`;
+      ctx.shadowBlur = 10;
       drawRingSector(r0, r1, a0, a1);
       ctx.fill();
-      // inner highlight
       ctx.shadowBlur = 0;
-      ctx.strokeStyle = `hsla(${b.hue}, 90%, 78%, ${0.5 + (b.hit > 0 ? 0.4 : 0)})`;
-      ctx.lineWidth = 1.4;
+      // glossy inner rim
+      ctx.strokeStyle = `hsla(${b.hue}, 90%, 94%, ${0.7 + (b.hit > 0 ? 0.3 : 0)})`;
+      ctx.lineWidth = 1.6;
+      drawRingSector(r0 + 1.5, r1 - 1.5, a0, a1);
       ctx.stroke();
       if (b.hit > 0) b.hit -= 0.12;
     }
     ctx.shadowBlur = 0;
 
-    // powerups
+    // power-ups — bobbing candy bubbles with a cute emoji
     for (const p of G.powerups) {
+      const bob = Math.sin(G.time * 4 + p.angle * 3) * 2;
       ctx.save();
-      ctx.translate(p.x, p.y);
-      const pulse = 1 + 0.12 * Math.sin(G.time * 8);
+      ctx.translate(p.x, p.y + bob);
+      const rad = Math.max(11, maxR * 0.03);
       ctx.shadowColor = p.color;
-      ctx.shadowBlur = 16;
-      ctx.fillStyle = p.color;
-      ctx.globalAlpha = 0.9;
+      ctx.shadowBlur = 14;
+      ctx.fillStyle = "#ffffff";
       ctx.beginPath();
-      ctx.arc(0, 0, 8 * pulse, 0, TAU);
+      ctx.arc(0, 0, rad, 0, TAU);
       ctx.fill();
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = "#04121a";
-      ctx.font = "bold 9px system-ui";
+      ctx.shadowBlur = 0;
+      ctx.lineWidth = 2.4;
+      ctx.strokeStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(0, 0, rad, 0, TAU);
+      ctx.stroke();
+      ctx.font = `${Math.round(rad * 1.15)}px system-ui`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(p.label[0], 0, 0.5);
+      ctx.fillText(p.icon, 0, rad * 0.08);
       ctx.restore();
     }
-    ctx.shadowBlur = 0;
 
-    // paddle (arc)
+    // paddle — a puffy little cloud bar
     {
       const a0 = paddle.angle - paddle.half;
       const a1 = paddle.angle + paddle.half;
-      const pw = Math.max(7, maxR * 0.03);
-      ctx.strokeStyle = "#00e5ff";
-      ctx.shadowColor = "#00e5ff";
-      ctx.shadowBlur = 20;
-      ctx.lineWidth = pw;
+      const pw = Math.max(9, maxR * 0.036);
       ctx.lineCap = "round";
+      // soft blue underglow
+      ctx.strokeStyle = "rgba(140,200,255,0.9)";
+      ctx.shadowColor = "rgba(120,190,255,0.9)";
+      ctx.shadowBlur = 16;
+      ctx.lineWidth = pw;
       ctx.beginPath();
       ctx.arc(cx, cy, R_paddle, a0, a1);
       ctx.stroke();
-      // inner glow line
+      // fluffy white body
       ctx.shadowBlur = 0;
-      ctx.strokeStyle = "rgba(255,255,255,0.85)";
-      ctx.lineWidth = pw * 0.35;
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = pw * 0.68;
       ctx.beginPath();
       ctx.arc(cx, cy, R_paddle, a0, a1);
       ctx.stroke();
+      ctx.lineCap = "butt";
     }
     ctx.shadowBlur = 0;
-    ctx.lineCap = "butt";
 
-    // core
+    // core — a cute fluffy cloud friend guarding the center
     {
-      const pulse = 1 + 0.06 * Math.sin(G.time * 3);
-      const cr = R_core * pulse;
-      const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, cr * 1.6);
       const dangerT = G.balls.reduce((m, b) => Math.min(m, b.pd || 999), 999);
       const danger = clamp(1 - (dangerT - R_core) / (R_paddle - R_core), 0, 1);
-      const hue = 190 - danger * 190; // shifts to red as ball nears
-      grd.addColorStop(0, `hsla(${hue},100%,75%,0.95)`);
-      grd.addColorStop(0.6, `hsla(${hue},100%,55%,0.5)`);
-      grd.addColorStop(1, `hsla(${hue},100%,50%,0)`);
-      ctx.fillStyle = grd;
-      ctx.beginPath();
-      ctx.arc(cx, cy, cr * 1.6, 0, TAU);
-      ctx.fill();
-      ctx.fillStyle = `hsl(${hue},100%,${60 + danger * 15}%)`;
-      ctx.shadowColor = `hsl(${hue},100%,60%)`;
-      ctx.shadowBlur = 24;
-      ctx.beginPath();
-      ctx.arc(cx, cy, cr, 0, TAU);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      // core ring
-      ctx.strokeStyle = "rgba(255,255,255,0.5)";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(cx, cy, cr * 0.62, G.time, G.time + Math.PI * 1.3);
-      ctx.stroke();
+      drawCloudFriend(danger);
     }
 
-    // particles
+    // particles — soft pastel dots & little hearts
     for (const p of G.particles) {
-      ctx.globalAlpha = clamp(p.life, 0, 1);
-      ctx.fillStyle = `hsl(${p.hue}, 90%, 65%)`;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r * p.life, 0, TAU);
-      ctx.fill();
+      const a = clamp(p.life, 0, 1);
+      ctx.globalAlpha = a;
+      if (p.shape === "heart") {
+        drawHeart(p.x, p.y, p.r * (0.9 + p.life) * 1.5, `hsl(${p.hue}, 85%, 72%)`);
+      } else {
+        ctx.fillStyle = `hsl(${p.hue}, 80%, 80%)`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r * p.life, 0, TAU);
+        ctx.fill();
+      }
     }
     ctx.globalAlpha = 1;
 
-    // balls
+    // balls — soft white puffs with a shine and a tiny blush
     for (const b of G.balls) {
-      ctx.shadowColor = "#ffffff";
-      ctx.shadowBlur = 16;
-      const grd = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
+      ctx.shadowColor = "rgba(150,205,255,0.9)";
+      ctx.shadowBlur = 12;
+      const grd = ctx.createRadialGradient(b.x - b.r * 0.3, b.y - b.r * 0.3, 0, b.x, b.y, b.r);
       grd.addColorStop(0, "#ffffff");
-      grd.addColorStop(1, "#8ad6ff");
+      grd.addColorStop(1, "#d6f0ff");
       ctx.fillStyle = grd;
       ctx.beginPath();
       ctx.arc(b.x, b.y, b.r, 0, TAU);
       ctx.fill();
+      ctx.shadowBlur = 0;
+      // blush
+      ctx.fillStyle = "rgba(255,160,190,0.55)";
+      ctx.beginPath();
+      ctx.arc(b.x - b.r * 0.42, b.y + b.r * 0.15, b.r * 0.2, 0, TAU);
+      ctx.arc(b.x + b.r * 0.42, b.y + b.r * 0.15, b.r * 0.2, 0, TAU);
+      ctx.fill();
+      // shine
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      ctx.beginPath();
+      ctx.arc(b.x - b.r * 0.32, b.y - b.r * 0.34, b.r * 0.22, 0, TAU);
+      ctx.fill();
     }
-    ctx.shadowBlur = 0;
 
-    // floaters
+    // floaters — cute rounded labels
     for (const f of G.floaters) {
       ctx.globalAlpha = clamp(f.life, 0, 1);
       ctx.fillStyle = f.color;
-      ctx.font = "bold 14px system-ui";
+      ctx.font = "700 15px 'Segoe UI', system-ui, sans-serif";
       ctx.textAlign = "center";
+      ctx.textBaseline = "alphabetic";
       ctx.fillText(f.text, f.x, f.y);
     }
     ctx.globalAlpha = 1;

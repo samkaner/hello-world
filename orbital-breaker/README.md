@@ -1,12 +1,15 @@
-# 🛰️ Orbital Breaker
+# ☁️ Orbital Breaker
 
-**A brick breaker turned inside-out.**
+**A cuddly cloud take on brick breaker.**
 
 Classic breakout has a paddle sliding along the bottom of the screen. Orbital
-Breaker takes that idea and wraps it around a circle: your paddle **orbits a
-glowing core**, the bricks surround you in concentric neon rings, and the ball
-can dive inward from *any* direction. Spin to deflect it back out — and never
-let it reach the core.
+Breaker takes that idea and wraps it around a circle: your fluffy paddle
+**orbits a little cloud friend**, pastel candy bricks surround you in concentric
+rings, and the ball drifts inward from *any* direction. Bop it back out — and
+keep your cloud safe and cozy.
+
+Soft pastel, light-blue, cloud-friend aesthetic with adorable synthesized sound
+effects — gentle chimes and boops, no audio files.
 
 No build step, no dependencies. It's an installable **Progressive Web App** —
 add it to your phone's home screen and it runs full-screen and offline.
@@ -42,6 +45,7 @@ since the app shell is cached by the service worker.
 | Rotate the paddle | **← →** or **A / D** |
 | Launch the ball | **Space** / **Enter** / **tap** / **click** |
 | Pause | **P** / the on-screen ❚❚ button |
+| Mute / unmute | **M** / the on-screen 🔊 button |
 
 Where the ball strikes the paddle — and how fast the paddle is sweeping —
 angles the rebound, so you can "steer" the ball toward the bricks you want.
@@ -52,24 +56,26 @@ use the ❚❚ button (bottom corner) to pause.
 ## 🌀 The twist
 
 - **Radial playfield.** Everything is polar. The "floor" you're defending
-  isn't below you — it's the core at the center.
-- **360° threat.** The ball attacks from every angle, so positioning is a
+  isn't below you — it's the little cloud friend at the center.
+- **360° threat.** The ball drifts in from every angle, so positioning is a
   constant orbital chase rather than a left-right shuffle.
-- **Defend, don't just clear.** Lose the ball past your paddle and it breaches
-  the core, costing you a life. Clear every ring to advance.
+- **Defend, don't just clear.** Lose the ball past your paddle and it reaches
+  your cloud, costing you a heart. Clear every ring to advance.
 
 ## ✨ Features
 
-- Concentric brick rings that grow denser and tougher each level
-- Four catchable power-ups that drift inward toward the core:
-  - **WIDE** — a wider paddle arc
-  - **SLOW** — slows the ball down
-  - **MULTI** — splits into three balls
-  - **+CORE** — an extra life
+- Concentric pastel brick rings that grow denser and tougher each level
+- Four adorable power-ups that drift inward toward your cloud:
+  - **🎀 FLUFFY** — a wider paddle arc
+  - **💤 SLEEPY** — slows the ball down
+  - **☁️ POOF** — splits into three balls
+  - **💗 LOVE** — an extra heart
+- Cute synthesized sound effects (WebAudio, no files): soft chimes on hits,
+  gentle boops on bounces, a sparkle on power-ups — toggle with **M** / 🔊
 - Constant-speed physics with anti-tunneling sub-steps, spin transfer, and
   angle control off the paddle
-- Neon glow aesthetic, particle bursts, screen shake, a core that flushes red
-  as danger closes in, and a parallax starfield
+- Soft pastel cloud aesthetic: a smiling cloud-friend core (that looks worried
+  as danger nears), drifting clouds, heart & sparkle particles
 - Best-score saved to `localStorage`
 - Fully responsive & touch-friendly — plays on desktop and mobile, with
   safe-area insets so the HUD clears notches/rounded corners
@@ -82,14 +88,15 @@ Plain HTML5 Canvas + vanilla JavaScript + CSS. Zero dependencies, no build:
 ```
 orbital-breaker/
 ├── index.html            # markup, HUD, overlays, PWA meta
-├── style.css             # neon UI / overlay styling, safe-area insets
-├── game.js               # engine: physics, rendering, game loop, SW register
+├── style.css             # pastel UI / overlay styling, safe-area insets
+├── game.js               # engine: physics, rendering, sound, game loop, SW register
 ├── manifest.webmanifest  # PWA manifest (name, icons, standalone)
 ├── sw.js                 # service worker — offline app-shell cache
-├── icon-192.png          # app icons
+├── screenshot.png        # gameplay still (also the landing-page hero)
+├── icon-192.png          # app icons (cute cloud friend)
 ├── icon-512.png
 ├── icon-maskable-512.png # maskable icon (Android adaptive)
 └── apple-touch-icon.png  # iOS home-screen icon
 ```
 
-Enjoy defending the core. 🔮
+Keep your cloud safe and cozy. ☁️🩵

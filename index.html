@@ -3,26 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#05060d" />
-  <title>Orbital Breaker — a brick breaker turned inside-out</title>
-  <meta name="description" content="Orbital Breaker is a radial take on brick breaker: your paddle orbits a glowing core while bricks surround you in neon rings. Play free in your browser or install it as an app." />
+  <meta name="theme-color" content="#cbeeff" />
+  <title>Orbital Breaker ☁️ — a cuddly cloud brick breaker</title>
+  <meta name="description" content="Orbital Breaker is a cute cloud take on brick breaker: your fluffy paddle orbits a little cloud friend while pastel bricks surround you in rings. Play free in your browser or install it as an app." />
   <link rel="icon" href="./orbital-breaker/apple-touch-icon.png" />
   <link rel="apple-touch-icon" href="./orbital-breaker/apple-touch-icon.png" />
 
   <!-- Social preview -->
-  <meta property="og:title" content="Orbital Breaker" />
-  <meta property="og:description" content="A brick breaker turned inside-out — defend the core." />
+  <meta property="og:title" content="Orbital Breaker ☁️" />
+  <meta property="og:description" content="A cuddly cloud take on brick breaker — keep your cloud friend safe." />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="./orbital-breaker/icon-512.png" />
 
   <style>
     :root {
-      --bg: #05060d;
-      --cyan: #00e5ff;
-      --pink: #ff3cac;
-      --violet: #8a5cff;
-      --ink: #e7ecff;
-      --muted: rgba(231, 236, 255, 0.62);
+      --bg: #dff4ff;
+      --blue: #5fbff9;
+      --blue-deep: #3aa0e8;
+      --pink: #ff9ec4;
+      --lav: #b39dff;
+      --ink: #4a5a72;
+      --muted: #7c8aa3;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
@@ -35,107 +36,107 @@
       overflow-x: hidden;
     }
 
-    /* animated glow backdrop */
+    /* soft sky backdrop with fluffy blobs */
     .backdrop {
       position: fixed; inset: 0; z-index: -1;
       background:
-        radial-gradient(60vmax 60vmax at 18% 12%, rgba(0, 229, 255, 0.12), transparent 60%),
-        radial-gradient(55vmax 55vmax at 85% 20%, rgba(255, 60, 172, 0.12), transparent 60%),
-        radial-gradient(70vmax 70vmax at 50% 100%, rgba(138, 92, 255, 0.14), transparent 60%),
-        var(--bg);
+        radial-gradient(46vmax 46vmax at 15% 8%, rgba(255, 255, 255, 0.7), transparent 60%),
+        radial-gradient(40vmax 40vmax at 85% 14%, rgba(179, 157, 255, 0.18), transparent 60%),
+        radial-gradient(60vmax 60vmax at 50% 100%, rgba(95, 191, 249, 0.16), transparent 60%),
+        linear-gradient(180deg, #cbeeff, #eafaff);
     }
 
     .wrap { max-width: 1040px; margin: 0 auto; padding: 0 22px; }
 
     /* ---------- hero ---------- */
-    header { padding: clamp(48px, 9vw, 96px) 0 40px; text-align: center; }
+    header { padding: clamp(46px, 9vw, 92px) 0 36px; text-align: center; }
     .badge {
       display: inline-block;
-      font-size: 12px; letter-spacing: 3px; text-transform: uppercase;
-      color: var(--muted);
-      border: 1px solid rgba(138, 92, 255, 0.4);
+      font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--blue-deep);
+      background: rgba(255, 255, 255, 0.75);
+      border: 2px solid rgba(143, 214, 255, 0.7);
       border-radius: 999px; padding: 6px 16px; margin-bottom: 26px;
     }
     h1 {
-      font-size: clamp(42px, 11vw, 92px);
-      font-weight: 800; letter-spacing: 2px; line-height: 0.95;
-      background: linear-gradient(90deg, var(--cyan), var(--violet), var(--pink));
+      font-size: clamp(40px, 11vw, 88px);
+      font-weight: 800; letter-spacing: 1px; line-height: 0.95;
+      background: linear-gradient(90deg, var(--blue), var(--lav), var(--pink));
       -webkit-background-clip: text; background-clip: text; color: transparent;
-      filter: drop-shadow(0 0 26px rgba(0, 229, 255, 0.3));
     }
     .tagline { margin: 20px auto 0; max-width: 620px; font-size: clamp(16px, 2.4vw, 20px); color: var(--muted); }
 
-    .cta { margin-top: 38px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .cta { margin-top: 34px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
     .btn {
       display: inline-flex; align-items: center; gap: 10px;
       padding: 15px 40px; border-radius: 999px;
-      font-size: 16px; font-weight: 700; letter-spacing: 1.5px;
+      font-size: 16px; font-weight: 800; letter-spacing: 0.6px;
       text-decoration: none; cursor: pointer; border: none;
       transition: transform 0.14s ease, box-shadow 0.24s ease;
     }
     .btn-primary {
-      color: #04121a;
-      background: linear-gradient(90deg, var(--cyan), var(--violet));
-      box-shadow: 0 0 30px rgba(0, 229, 255, 0.45);
+      color: #fff;
+      background: linear-gradient(90deg, var(--blue), var(--lav));
+      box-shadow: 0 10px 24px rgba(95, 191, 249, 0.45);
     }
-    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 0 44px rgba(0, 229, 255, 0.7); }
+    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(95, 191, 249, 0.6); }
     .btn-ghost {
-      color: var(--ink);
-      background: rgba(13, 16, 34, 0.6);
-      border: 1px solid rgba(138, 92, 255, 0.45);
+      color: var(--blue-deep);
+      background: rgba(255, 255, 255, 0.85);
+      border: 2px solid rgba(143, 214, 255, 0.8);
     }
-    .btn-ghost:hover { transform: translateY(-3px); border-color: var(--cyan); }
+    .btn-ghost:hover { transform: translateY(-3px); }
 
     /* ---------- screenshot ---------- */
     .shot {
-      margin: 52px auto 0; max-width: 760px; border-radius: 18px; overflow: hidden;
-      border: 1px solid rgba(138, 92, 255, 0.35);
-      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(0, 229, 255, 0.12);
+      margin: 50px auto 0; max-width: 760px; border-radius: 24px; overflow: hidden;
+      border: 3px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 24px 60px rgba(120, 180, 240, 0.35);
       line-height: 0;
     }
     .shot img { width: 100%; height: auto; display: block; }
 
-    /* ---------- features ---------- */
-    section { padding: 64px 0; }
-    .section-title { text-align: center; font-size: clamp(24px, 4vw, 32px); font-weight: 700; margin-bottom: 8px; }
+    /* ---------- sections ---------- */
+    section { padding: 60px 0; }
+    .section-title { text-align: center; font-size: clamp(24px, 4vw, 32px); font-weight: 800; margin-bottom: 8px; color: var(--blue-deep); }
     .section-sub { text-align: center; color: var(--muted); margin-bottom: 40px; }
 
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
     .card {
-      background: rgba(13, 16, 34, 0.6);
-      border: 1px solid rgba(138, 92, 255, 0.22);
-      border-radius: 16px; padding: 26px 22px;
-      transition: transform 0.16s ease, border-color 0.2s ease;
+      background: rgba(255, 255, 255, 0.8);
+      border: 2px solid rgba(143, 214, 255, 0.55);
+      border-radius: 20px; padding: 26px 22px;
+      transition: transform 0.16s ease, box-shadow 0.2s ease;
     }
-    .card:hover { transform: translateY(-4px); border-color: rgba(0, 229, 255, 0.5); }
-    .card .ico { font-size: 26px; margin-bottom: 12px; }
-    .card h3 { font-size: 17px; margin-bottom: 6px; }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(120, 180, 240, 0.28); }
+    .card .ico { font-size: 30px; margin-bottom: 12px; }
+    .card h3 { font-size: 17px; margin-bottom: 6px; color: var(--ink); }
     .card p { font-size: 14.5px; color: var(--muted); }
 
-    /* ---------- how to play / install ---------- */
+    /* ---------- play / install ---------- */
     .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; }
     .panel {
-      background: rgba(13, 16, 34, 0.55);
-      border: 1px solid rgba(138, 92, 255, 0.25);
-      border-radius: 18px; padding: 30px 28px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 2px solid rgba(143, 214, 255, 0.6);
+      border-radius: 22px; padding: 30px 28px;
     }
-    .panel h3 { font-size: 19px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+    .panel h3 { font-size: 19px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; color: var(--ink); }
     .panel ul { list-style: none; }
-    .panel li { padding: 8px 0; color: var(--muted); border-bottom: 1px solid rgba(138, 92, 255, 0.12); }
+    .panel li { padding: 8px 0; color: var(--muted); border-bottom: 2px dashed rgba(143, 214, 255, 0.4); }
     .panel li:last-child { border-bottom: none; }
     .panel li b { color: var(--ink); }
     kbd {
       display: inline-block; min-width: 22px; text-align: center;
-      padding: 2px 8px; margin: 0 1px; border-radius: 6px;
+      padding: 2px 8px; margin: 0 1px; border-radius: 8px;
       font-family: inherit; font-size: 13px;
-      background: rgba(0, 229, 255, 0.12);
-      border: 1px solid rgba(0, 229, 255, 0.4);
-      color: var(--cyan);
+      background: #fff;
+      border: 2px solid rgba(95, 191, 249, 0.6);
+      color: var(--blue-deep);
     }
 
     /* ---------- footer ---------- */
-    footer { padding: 50px 0 60px; text-align: center; color: var(--muted); font-size: 14px; }
-    footer a { color: var(--cyan); text-decoration: none; }
+    footer { padding: 46px 0 60px; text-align: center; color: var(--muted); font-size: 14px; }
+    footer a { color: var(--blue-deep); text-decoration: none; }
     footer a:hover { text-decoration: underline; }
     .foot-cta { margin-bottom: 26px; }
   </style>
@@ -145,12 +146,13 @@
 
   <div class="wrap">
     <header>
-      <span class="badge">Radial Brick Breaker · PWA</span>
+      <span class="badge">☁️ Cuddly Cloud Brick Breaker</span>
       <h1>ORBITAL BREAKER</h1>
       <p class="tagline">
-        A brick breaker turned inside-out. Your paddle <b>orbits a glowing core</b>,
-        bricks surround you in neon rings, and the ball dives inward from every
-        direction. Spin to deflect it &mdash; and never let it reach the core.
+        A cuddly cloud take on brick breaker. Your fluffy paddle <b>orbits a
+        little cloud friend</b>, pastel bricks surround you in rings, and the ball
+        drifts inward from every direction. Bop it back out and keep your cloud
+        safe &amp; cozy. 🩵
       </p>
       <div class="cta">
         <a class="btn btn-primary" href="./orbital-breaker/">▶ Play now</a>
@@ -159,33 +161,33 @@
 
       <a class="shot" href="./orbital-breaker/" aria-label="Play Orbital Breaker">
         <img src="./orbital-breaker/screenshot.png"
-             alt="Orbital Breaker gameplay: concentric neon brick rings around a glowing central core with an orbiting cyan paddle" />
+             alt="Orbital Breaker gameplay: pastel candy brick rings around a smiling cloud friend, with a fluffy cloud paddle orbiting the center" />
       </a>
     </header>
 
     <section>
       <h2 class="section-title">Not your usual breakout</h2>
-      <p class="section-sub">Everything is polar. The floor you defend isn't below you — it's the core at the center.</p>
+      <p class="section-sub">Everything is polar &mdash; the friend you protect isn't below you, it's the cloud at the center.</p>
       <div class="grid">
         <div class="card">
-          <div class="ico">🛰️</div>
-          <h3>360° defense</h3>
-          <p>The ball attacks from any angle, so play is a constant orbital chase instead of a left-right shuffle.</p>
+          <div class="ico">☁️</div>
+          <h3>Protect your cloud</h3>
+          <p>A smiling little cloud friend sits at the center. Keep the ball from reaching it!</p>
         </div>
         <div class="card">
-          <div class="ico">🌀</div>
-          <h3>Concentric rings</h3>
-          <p>Bricks stack in glowing rings that grow denser and tougher each level. Clear them all to advance.</p>
+          <div class="ico">🌈</div>
+          <h3>Pastel rings</h3>
+          <p>Candy-soft bricks stack in concentric rings that grow denser and cuter each level.</p>
         </div>
         <div class="card">
-          <div class="ico">⚡</div>
-          <h3>Power-ups</h3>
-          <p>Catch drifting capsules: wider paddle, slow-mo ball, multi-ball, and extra core lives.</p>
+          <div class="ico">🎀</div>
+          <h3>Adorable power-ups</h3>
+          <p>Catch fluffy bubbles: 🎀 wide paddle, 💤 slow ball, ☁️ multi-ball, and 💗 extra hearts.</p>
         </div>
         <div class="card">
-          <div class="ico">📱</div>
-          <h3>Installable</h3>
-          <p>A full PWA — add it to your home screen and it runs standalone and offline.</p>
+          <div class="ico">🔔</div>
+          <h3>Sweet sounds</h3>
+          <p>Gentle chimes and soft boops for every bounce &mdash; tap 🔊 or press M to toggle.</p>
         </div>
       </div>
     </section>
@@ -197,10 +199,10 @@
         <div class="panel">
           <h3>🎮 Controls</h3>
           <ul>
-            <li>Aim the paddle &mdash; <b>move the mouse</b> or <b>drag</b></li>
+            <li>Float the paddle &mdash; <b>move the mouse</b> or <b>drag</b></li>
             <li>Rotate &mdash; <kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd></li>
             <li>Launch &mdash; <kbd>Space</kbd> / <b>tap</b> / <b>click</b></li>
-            <li>Pause &mdash; <kbd>P</kbd> or the on-screen ❚❚ button</li>
+            <li>Pause &mdash; <kbd>P</kbd> &middot; Mute &mdash; <kbd>M</kbd></li>
           </ul>
         </div>
         <div class="panel">
@@ -214,7 +216,7 @@
         </div>
       </div>
       <div class="cta" style="margin-top:40px;">
-        <a class="btn btn-primary" href="./orbital-breaker/">▶ Launch the game</a>
+        <a class="btn btn-primary" href="./orbital-breaker/">▶ Launch the game ☁️</a>
       </div>
     </section>
   </div>
