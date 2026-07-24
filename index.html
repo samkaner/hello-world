@@ -3,17 +3,229 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Orbital Breaker</title>
-  <meta http-equiv="refresh" content="0; url=./orbital-breaker/" />
-  <link rel="canonical" href="./orbital-breaker/" />
+  <meta name="theme-color" content="#05060d" />
+  <title>Orbital Breaker — a brick breaker turned inside-out</title>
+  <meta name="description" content="Orbital Breaker is a radial take on brick breaker: your paddle orbits a glowing core while bricks surround you in neon rings. Play free in your browser or install it as an app." />
+  <link rel="icon" href="./orbital-breaker/apple-touch-icon.png" />
+  <link rel="apple-touch-icon" href="./orbital-breaker/apple-touch-icon.png" />
+
+  <!-- Social preview -->
+  <meta property="og:title" content="Orbital Breaker" />
+  <meta property="og:description" content="A brick breaker turned inside-out — defend the core." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="./orbital-breaker/icon-512.png" />
+
   <style>
-    html, body { height: 100%; margin: 0; background: #05060d; color: #e7ecff;
-      font-family: system-ui, sans-serif; display: flex; align-items: center;
-      justify-content: center; }
-    a { color: #00e5ff; }
+    :root {
+      --bg: #05060d;
+      --cyan: #00e5ff;
+      --pink: #ff3cac;
+      --violet: #8a5cff;
+      --ink: #e7ecff;
+      --muted: rgba(231, 236, 255, 0.62);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      line-height: 1.55;
+      overflow-x: hidden;
+    }
+
+    /* animated glow backdrop */
+    .backdrop {
+      position: fixed; inset: 0; z-index: -1;
+      background:
+        radial-gradient(60vmax 60vmax at 18% 12%, rgba(0, 229, 255, 0.12), transparent 60%),
+        radial-gradient(55vmax 55vmax at 85% 20%, rgba(255, 60, 172, 0.12), transparent 60%),
+        radial-gradient(70vmax 70vmax at 50% 100%, rgba(138, 92, 255, 0.14), transparent 60%),
+        var(--bg);
+    }
+
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 0 22px; }
+
+    /* ---------- hero ---------- */
+    header { padding: clamp(48px, 9vw, 96px) 0 40px; text-align: center; }
+    .badge {
+      display: inline-block;
+      font-size: 12px; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--muted);
+      border: 1px solid rgba(138, 92, 255, 0.4);
+      border-radius: 999px; padding: 6px 16px; margin-bottom: 26px;
+    }
+    h1 {
+      font-size: clamp(42px, 11vw, 92px);
+      font-weight: 800; letter-spacing: 2px; line-height: 0.95;
+      background: linear-gradient(90deg, var(--cyan), var(--violet), var(--pink));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      filter: drop-shadow(0 0 26px rgba(0, 229, 255, 0.3));
+    }
+    .tagline { margin: 20px auto 0; max-width: 620px; font-size: clamp(16px, 2.4vw, 20px); color: var(--muted); }
+
+    .cta { margin-top: 38px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 15px 40px; border-radius: 999px;
+      font-size: 16px; font-weight: 700; letter-spacing: 1.5px;
+      text-decoration: none; cursor: pointer; border: none;
+      transition: transform 0.14s ease, box-shadow 0.24s ease;
+    }
+    .btn-primary {
+      color: #04121a;
+      background: linear-gradient(90deg, var(--cyan), var(--violet));
+      box-shadow: 0 0 30px rgba(0, 229, 255, 0.45);
+    }
+    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 0 44px rgba(0, 229, 255, 0.7); }
+    .btn-ghost {
+      color: var(--ink);
+      background: rgba(13, 16, 34, 0.6);
+      border: 1px solid rgba(138, 92, 255, 0.45);
+    }
+    .btn-ghost:hover { transform: translateY(-3px); border-color: var(--cyan); }
+
+    /* ---------- screenshot ---------- */
+    .shot {
+      margin: 52px auto 0; max-width: 760px; border-radius: 18px; overflow: hidden;
+      border: 1px solid rgba(138, 92, 255, 0.35);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(0, 229, 255, 0.12);
+      line-height: 0;
+    }
+    .shot img { width: 100%; height: auto; display: block; }
+
+    /* ---------- features ---------- */
+    section { padding: 64px 0; }
+    .section-title { text-align: center; font-size: clamp(24px, 4vw, 32px); font-weight: 700; margin-bottom: 8px; }
+    .section-sub { text-align: center; color: var(--muted); margin-bottom: 40px; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
+    .card {
+      background: rgba(13, 16, 34, 0.6);
+      border: 1px solid rgba(138, 92, 255, 0.22);
+      border-radius: 16px; padding: 26px 22px;
+      transition: transform 0.16s ease, border-color 0.2s ease;
+    }
+    .card:hover { transform: translateY(-4px); border-color: rgba(0, 229, 255, 0.5); }
+    .card .ico { font-size: 26px; margin-bottom: 12px; }
+    .card h3 { font-size: 17px; margin-bottom: 6px; }
+    .card p { font-size: 14.5px; color: var(--muted); }
+
+    /* ---------- how to play / install ---------- */
+    .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; }
+    .panel {
+      background: rgba(13, 16, 34, 0.55);
+      border: 1px solid rgba(138, 92, 255, 0.25);
+      border-radius: 18px; padding: 30px 28px;
+    }
+    .panel h3 { font-size: 19px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+    .panel ul { list-style: none; }
+    .panel li { padding: 8px 0; color: var(--muted); border-bottom: 1px solid rgba(138, 92, 255, 0.12); }
+    .panel li:last-child { border-bottom: none; }
+    .panel li b { color: var(--ink); }
+    kbd {
+      display: inline-block; min-width: 22px; text-align: center;
+      padding: 2px 8px; margin: 0 1px; border-radius: 6px;
+      font-family: inherit; font-size: 13px;
+      background: rgba(0, 229, 255, 0.12);
+      border: 1px solid rgba(0, 229, 255, 0.4);
+      color: var(--cyan);
+    }
+
+    /* ---------- footer ---------- */
+    footer { padding: 50px 0 60px; text-align: center; color: var(--muted); font-size: 14px; }
+    footer a { color: var(--cyan); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+    .foot-cta { margin-bottom: 26px; }
   </style>
 </head>
 <body>
-  <p>Launching <a href="./orbital-breaker/">Orbital Breaker</a>&hellip;</p>
+  <div class="backdrop"></div>
+
+  <div class="wrap">
+    <header>
+      <span class="badge">Radial Brick Breaker · PWA</span>
+      <h1>ORBITAL BREAKER</h1>
+      <p class="tagline">
+        A brick breaker turned inside-out. Your paddle <b>orbits a glowing core</b>,
+        bricks surround you in neon rings, and the ball dives inward from every
+        direction. Spin to deflect it &mdash; and never let it reach the core.
+      </p>
+      <div class="cta">
+        <a class="btn btn-primary" href="./orbital-breaker/">▶ Play now</a>
+        <a class="btn btn-ghost" href="#install">Install as an app</a>
+      </div>
+
+      <a class="shot" href="./orbital-breaker/" aria-label="Play Orbital Breaker">
+        <img src="./orbital-breaker/screenshot.png"
+             alt="Orbital Breaker gameplay: concentric neon brick rings around a glowing central core with an orbiting cyan paddle" />
+      </a>
+    </header>
+
+    <section>
+      <h2 class="section-title">Not your usual breakout</h2>
+      <p class="section-sub">Everything is polar. The floor you defend isn't below you — it's the core at the center.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="ico">🛰️</div>
+          <h3>360° defense</h3>
+          <p>The ball attacks from any angle, so play is a constant orbital chase instead of a left-right shuffle.</p>
+        </div>
+        <div class="card">
+          <div class="ico">🌀</div>
+          <h3>Concentric rings</h3>
+          <p>Bricks stack in glowing rings that grow denser and tougher each level. Clear them all to advance.</p>
+        </div>
+        <div class="card">
+          <div class="ico">⚡</div>
+          <h3>Power-ups</h3>
+          <p>Catch drifting capsules: wider paddle, slow-mo ball, multi-ball, and extra core lives.</p>
+        </div>
+        <div class="card">
+          <div class="ico">📱</div>
+          <h3>Installable</h3>
+          <p>A full PWA — add it to your home screen and it runs standalone and offline.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="install">
+      <h2 class="section-title">Play &amp; install</h2>
+      <p class="section-sub">Free in any modern browser. No downloads, no accounts.</p>
+      <div class="cols">
+        <div class="panel">
+          <h3>🎮 Controls</h3>
+          <ul>
+            <li>Aim the paddle &mdash; <b>move the mouse</b> or <b>drag</b></li>
+            <li>Rotate &mdash; <kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd></li>
+            <li>Launch &mdash; <kbd>Space</kbd> / <b>tap</b> / <b>click</b></li>
+            <li>Pause &mdash; <kbd>P</kbd> or the on-screen ❚❚ button</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>📲 Add to home screen</h3>
+          <ul>
+            <li><b>iOS Safari</b> &mdash; Share → <i>Add to Home Screen</i></li>
+            <li><b>Android Chrome</b> &mdash; menu → <i>Install app</i></li>
+            <li><b>Desktop Chrome / Edge</b> &mdash; install icon in the address bar</li>
+            <li>Once installed it launches full-screen and works offline.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="cta" style="margin-top:40px;">
+        <a class="btn btn-primary" href="./orbital-breaker/">▶ Launch the game</a>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <div class="wrap">
+      <div class="foot-cta">
+        Built with plain HTML5 Canvas &amp; vanilla JavaScript &mdash; zero dependencies.
+      </div>
+      <a href="https://github.com/samkaner/hello-world/tree/claude/brick-breaker-game-repo-7g0iyd/orbital-breaker">Source on GitHub</a>
+    </div>
+  </footer>
 </body>
 </html>
