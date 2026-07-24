@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#cbeeff" />
+  <title>Cloud Arcade</title>
+  <meta name="description" content="Play this game in Cloud Arcade." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cellipse cx='30' cy='52' rx='12' ry='20' fill='white'/%3E%3Cellipse cx='70' cy='52' rx='12' ry='20' fill='white'/%3E%3Ccircle cx='50' cy='56' r='26' fill='white'/%3E%3Ccircle cx='34' cy='40' r='16' fill='white'/%3E%3Ccircle cx='66' cy='40' r='16' fill='white'/%3E%3Ccircle cx='42' cy='52' r='3' fill='%234a5a72'/%3E%3Ccircle cx='58' cy='52' r='3' fill='%234a5a72'/%3E%3Ccircle cx='36' cy='58' r='4' fill='%23ff9ec4'/%3E%3Ccircle cx='64' cy='58' r='4' fill='%23ff9ec4'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="arcade.css" />
+</head>
+<body>
+  <div class="sky"></div>
+
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand"><span class="logo">☁️</span> <span>Cloud <b>Arcade</b></span></div>
+    </div>
+    <a class="back" href="./index.html">← All games</a>
+
+    <main id="content"></main>
+  </div>
+
+  <footer>
+    <div class="made">Part of <a href="./index.html">Cloud Arcade</a> — a growing library of tiny, delightful games.</div>
+    <a href="https://github.com/samkaner/hello-world">Source on GitHub</a>
+  </footer>
+
+  <script src="games.js"></script>
+  <script>
+    (function () {
+      var params = new URLSearchParams(location.search);
+      var id = params.get("id");
+      var games = window.GAMES || [];
+      var g = games.filter(function (x) { return x.id === id; })[0];
+      var content = document.getElementById("content");
+
+      if (!g) {
+        content.innerHTML =
+          '<div class="empty" style="padding:80px 0">' +
+          "That game isn't here yet. <br><br>" +
+          '<a class="btn btn-primary" href="./index.html" style="--accent:#5fbff9;--accent2:#b39dff">Browse the arcade</a>' +
+          "</div>";
+        return;
+      }
+
+      // theme the page from the game
+      var root = document.documentElement;
+      root.style.setProperty("--accent", g.accent);
+      root.style.setProperty("--accent2", g.accent2);
+      document.title = g.title + " ☁️ — Cloud Arcade";
+      var tc = document.querySelector('meta[name="theme-color"]');
+      if (tc) tc.setAttribute("content", g.accent);
+
+      var live = g.status === "live";
+
+      // hero visual: screenshot for live games, emoji placeholder otherwise
+      var visual = live && g.screenshot
+        ? '<a class="shot" href="' + g.playUrl + '"><img src="' + g.screenshot +
+          '" alt="' + g.title + ' gameplay" /></a>'
+        : '<div class="shot placeholder" style="--accent:' + g.accent + ';--accent2:' + g.accent2 +
+          '"><span class="big-emoji">' + g.emoji + "</span></div>";
+
+      var cta = live
+        ? '<a class="btn btn-primary" href="' + g.playUrl + '">▶ Play ' + g.title + "</a>"
+        : '<button class="btn btn-primary is-disabled" disabled>Coming soon ✨</button>';
+      cta += '<a class="btn btn-ghost" href="./index.html">← More games</a>';
+
+      var tags = (g.tags || []).map(function (t) { return '<span class="tag">' + t + "</span>"; }).join("");
+
+      var hero =
+        '<div class="game-hero">' +
+          "<div>" +
+            '<div class="emoji-title"><span class="e">' + g.emoji + '</span><h1><span>' + g.title + "</span></h1></div>" +
+            '<p class="game-tagline">' + g.tagline + "</p>" +
+            '<p class="game-desc">' + (g.description || "") + "</p>" +
+            '<div class="tags" style="margin-top:14px">' + tags + "</div>" +
+            '<div class="game-cta">' + cta + "</div>" +
+          "</div>" +
+          "<div>" + visual + "</div>" +
+        "</div>";
+
+      // panels: controls + how-to-play / install
+      var panels = '<div class="panels">';
+      if (g.controls && g.controls.length) {
+        panels += '<div class="panel"><h3>🎮 Controls</h3><ul>' +
+          g.controls.map(function (row) {
+            return "<li><b>" + row[0] + "</b> — " + row[1] + "</li>";
+          }).join("") + "</ul></div>";
+      }
+      if (live) {
+        panels += '<div class="panel"><h3>📲 Play &amp; install</h3><ul>' +
+          "<li>Runs in any modern browser — <b>" + (g.players || "1 player") + "</b></li>" +
+          (g.installable
+            ? "<li><b>iOS Safari</b> — Share → <i>Add to Home Screen</i></li>" +
+              "<li><b>Android / Desktop Chrome</b> — <i>Install app</i></li>" +
+              "<li>Installed games run full-screen &amp; offline.</li>"
+            : "<li>No download or account needed.</li>") +
+          "</ul></div>";
+      } else {
+        panels += '<div class="panel"><h3>🚧 Coming soon</h3><ul>' +
+          "<li>This game is on the way to the arcade.</li>" +
+          "<li>Check back soon — or explore what's live now.</li>" +
+          "</ul></div>";
+      }
+      panels += "</div>";
+
+      content.innerHTML = hero + panels;
+    })();
+  </script>
+</body>
+</html>

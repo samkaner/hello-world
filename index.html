@@ -4,230 +4,140 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#cbeeff" />
-  <title>Orbital Breaker ☁️ — a cuddly cloud brick breaker</title>
-  <meta name="description" content="Orbital Breaker is a cute cloud take on brick breaker: your fluffy paddle orbits a little cloud friend while pastel bricks surround you in rings. Play free in your browser or install it as an app." />
-  <link rel="icon" href="./orbital-breaker/apple-touch-icon.png" />
-  <link rel="apple-touch-icon" href="./orbital-breaker/apple-touch-icon.png" />
+  <title>Cloud Arcade ☁️🎮 — a growing library of tiny, delightful games</title>
+  <meta name="description" content="Cloud Arcade is a growing library of tiny, delightful browser games. Pick a game and play instantly — no downloads, no accounts." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cellipse cx='30' cy='52' rx='12' ry='20' fill='white'/%3E%3Cellipse cx='70' cy='52' rx='12' ry='20' fill='white'/%3E%3Ccircle cx='50' cy='56' r='26' fill='white'/%3E%3Ccircle cx='34' cy='40' r='16' fill='white'/%3E%3Ccircle cx='66' cy='40' r='16' fill='white'/%3E%3Ccircle cx='42' cy='52' r='3' fill='%234a5a72'/%3E%3Ccircle cx='58' cy='52' r='3' fill='%234a5a72'/%3E%3Ccircle cx='36' cy='58' r='4' fill='%23ff9ec4'/%3E%3Ccircle cx='64' cy='58' r='4' fill='%23ff9ec4'/%3E%3C/svg%3E" />
 
-  <!-- Social preview -->
-  <meta property="og:title" content="Orbital Breaker ☁️" />
-  <meta property="og:description" content="A cuddly cloud take on brick breaker — keep your cloud friend safe." />
+  <meta property="og:title" content="Cloud Arcade ☁️🎮" />
+  <meta property="og:description" content="A growing library of tiny, delightful browser games." />
   <meta property="og:type" content="website" />
-  <meta property="og:image" content="./orbital-breaker/icon-512.png" />
 
-  <style>
-    :root {
-      --bg: #dff4ff;
-      --blue: #5fbff9;
-      --blue-deep: #3aa0e8;
-      --pink: #ff9ec4;
-      --lav: #b39dff;
-      --ink: #4a5a72;
-      --muted: #7c8aa3;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body {
-      min-height: 100%;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-      line-height: 1.55;
-      overflow-x: hidden;
-    }
-
-    /* soft sky backdrop with fluffy blobs */
-    .backdrop {
-      position: fixed; inset: 0; z-index: -1;
-      background:
-        radial-gradient(46vmax 46vmax at 15% 8%, rgba(255, 255, 255, 0.7), transparent 60%),
-        radial-gradient(40vmax 40vmax at 85% 14%, rgba(179, 157, 255, 0.18), transparent 60%),
-        radial-gradient(60vmax 60vmax at 50% 100%, rgba(95, 191, 249, 0.16), transparent 60%),
-        linear-gradient(180deg, #cbeeff, #eafaff);
-    }
-
-    .wrap { max-width: 1040px; margin: 0 auto; padding: 0 22px; }
-
-    /* ---------- hero ---------- */
-    header { padding: clamp(46px, 9vw, 92px) 0 36px; text-align: center; }
-    .badge {
-      display: inline-block;
-      font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
-      color: var(--blue-deep);
-      background: rgba(255, 255, 255, 0.75);
-      border: 2px solid rgba(143, 214, 255, 0.7);
-      border-radius: 999px; padding: 6px 16px; margin-bottom: 26px;
-    }
-    h1 {
-      font-size: clamp(40px, 11vw, 88px);
-      font-weight: 800; letter-spacing: 1px; line-height: 0.95;
-      background: linear-gradient(90deg, var(--blue), var(--lav), var(--pink));
-      -webkit-background-clip: text; background-clip: text; color: transparent;
-    }
-    .tagline { margin: 20px auto 0; max-width: 620px; font-size: clamp(16px, 2.4vw, 20px); color: var(--muted); }
-
-    .cta { margin-top: 34px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
-    .btn {
-      display: inline-flex; align-items: center; gap: 10px;
-      padding: 15px 40px; border-radius: 999px;
-      font-size: 16px; font-weight: 800; letter-spacing: 0.6px;
-      text-decoration: none; cursor: pointer; border: none;
-      transition: transform 0.14s ease, box-shadow 0.24s ease;
-    }
-    .btn-primary {
-      color: #fff;
-      background: linear-gradient(90deg, var(--blue), var(--lav));
-      box-shadow: 0 10px 24px rgba(95, 191, 249, 0.45);
-    }
-    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(95, 191, 249, 0.6); }
-    .btn-ghost {
-      color: var(--blue-deep);
-      background: rgba(255, 255, 255, 0.85);
-      border: 2px solid rgba(143, 214, 255, 0.8);
-    }
-    .btn-ghost:hover { transform: translateY(-3px); }
-
-    /* ---------- screenshot ---------- */
-    .shot {
-      margin: 50px auto 0; max-width: 760px; border-radius: 24px; overflow: hidden;
-      border: 3px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 24px 60px rgba(120, 180, 240, 0.35);
-      line-height: 0;
-    }
-    .shot img { width: 100%; height: auto; display: block; }
-
-    /* ---------- sections ---------- */
-    section { padding: 60px 0; }
-    .section-title { text-align: center; font-size: clamp(24px, 4vw, 32px); font-weight: 800; margin-bottom: 8px; color: var(--blue-deep); }
-    .section-sub { text-align: center; color: var(--muted); margin-bottom: 40px; }
-
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; }
-    .card {
-      background: rgba(255, 255, 255, 0.8);
-      border: 2px solid rgba(143, 214, 255, 0.55);
-      border-radius: 20px; padding: 26px 22px;
-      transition: transform 0.16s ease, box-shadow 0.2s ease;
-    }
-    .card:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(120, 180, 240, 0.28); }
-    .card .ico { font-size: 30px; margin-bottom: 12px; }
-    .card h3 { font-size: 17px; margin-bottom: 6px; color: var(--ink); }
-    .card p { font-size: 14.5px; color: var(--muted); }
-
-    /* ---------- play / install ---------- */
-    .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px; }
-    .panel {
-      background: rgba(255, 255, 255, 0.82);
-      border: 2px solid rgba(143, 214, 255, 0.6);
-      border-radius: 22px; padding: 30px 28px;
-    }
-    .panel h3 { font-size: 19px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; color: var(--ink); }
-    .panel ul { list-style: none; }
-    .panel li { padding: 8px 0; color: var(--muted); border-bottom: 2px dashed rgba(143, 214, 255, 0.4); }
-    .panel li:last-child { border-bottom: none; }
-    .panel li b { color: var(--ink); }
-    kbd {
-      display: inline-block; min-width: 22px; text-align: center;
-      padding: 2px 8px; margin: 0 1px; border-radius: 8px;
-      font-family: inherit; font-size: 13px;
-      background: #fff;
-      border: 2px solid rgba(95, 191, 249, 0.6);
-      color: var(--blue-deep);
-    }
-
-    /* ---------- footer ---------- */
-    footer { padding: 46px 0 60px; text-align: center; color: var(--muted); font-size: 14px; }
-    footer a { color: var(--blue-deep); text-decoration: none; }
-    footer a:hover { text-decoration: underline; }
-    .foot-cta { margin-bottom: 26px; }
-  </style>
+  <link rel="stylesheet" href="arcade.css" />
 </head>
 <body>
-  <div class="backdrop"></div>
+  <div class="sky"></div>
 
   <div class="wrap">
-    <header>
-      <span class="badge">☁️ Cuddly Cloud Brick Breaker</span>
-      <h1>ORBITAL BREAKER</h1>
-      <p class="tagline">
-        A cuddly cloud take on brick breaker. Your fluffy paddle <b>orbits a
-        little cloud friend</b>, pastel bricks surround you in rings, and the ball
-        drifts inward from every direction. Bop it back out and keep your cloud
-        safe &amp; cozy. 🩵
-      </p>
-      <div class="cta">
-        <a class="btn btn-primary" href="./orbital-breaker/">▶ Play now</a>
-        <a class="btn btn-ghost" href="#install">Install as an app</a>
+    <div class="topbar">
+      <div class="brand">
+        <span class="logo">☁️</span> <span>Cloud <b>Arcade</b></span>
       </div>
+      <div class="spacer"></div>
+      <span class="pill" id="count-pill">…</span>
+    </div>
 
-      <a class="shot" href="./orbital-breaker/" aria-label="Play Orbital Breaker">
-        <img src="./orbital-breaker/screenshot.png"
-             alt="Orbital Breaker gameplay: pastel candy brick rings around a smiling cloud friend, with a fluffy cloud paddle orbiting the center" />
-      </a>
+    <header class="hero">
+      <h1>Pick a game. Play instantly.</h1>
+      <p>A growing library of tiny, delightful browser games — no downloads,
+         no accounts, just good fun. New games land here all the time. ☁️</p>
     </header>
 
-    <section>
-      <h2 class="section-title">Not your usual breakout</h2>
-      <p class="section-sub">Everything is polar &mdash; the friend you protect isn't below you, it's the cloud at the center.</p>
-      <div class="grid">
-        <div class="card">
-          <div class="ico">☁️</div>
-          <h3>Protect your cloud</h3>
-          <p>A smiling little cloud friend sits at the center. Keep the ball from reaching it!</p>
-        </div>
-        <div class="card">
-          <div class="ico">🌈</div>
-          <h3>Pastel rings</h3>
-          <p>Candy-soft bricks stack in concentric rings that grow denser and cuter each level.</p>
-        </div>
-        <div class="card">
-          <div class="ico">🎀</div>
-          <h3>Adorable power-ups</h3>
-          <p>Catch fluffy bubbles: 🎀 wide paddle, 💤 slow ball, ☁️ multi-ball, and 💗 extra hearts.</p>
-        </div>
-        <div class="card">
-          <div class="ico">🔔</div>
-          <h3>Sweet sounds</h3>
-          <p>Gentle chimes and soft boops for every bounce &mdash; tap 🔊 or press M to toggle.</p>
-        </div>
-      </div>
-    </section>
+    <div class="toolbar">
+      <label class="search">
+        <span class="ico">🔎</span>
+        <input id="search" type="search" placeholder="Search games…" aria-label="Search games" autocomplete="off" />
+      </label>
+      <div class="chips" id="chips"></div>
+    </div>
 
-    <section id="install">
-      <h2 class="section-title">Play &amp; install</h2>
-      <p class="section-sub">Free in any modern browser. No downloads, no accounts.</p>
-      <div class="cols">
-        <div class="panel">
-          <h3>🎮 Controls</h3>
-          <ul>
-            <li>Float the paddle &mdash; <b>move the mouse</b> or <b>drag</b></li>
-            <li>Rotate &mdash; <kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd></li>
-            <li>Launch &mdash; <kbd>Space</kbd> / <b>tap</b> / <b>click</b></li>
-            <li>Pause &mdash; <kbd>P</kbd> &middot; Mute &mdash; <kbd>M</kbd></li>
-          </ul>
-        </div>
-        <div class="panel">
-          <h3>📲 Add to home screen</h3>
-          <ul>
-            <li><b>iOS Safari</b> &mdash; Share → <i>Add to Home Screen</i></li>
-            <li><b>Android Chrome</b> &mdash; menu → <i>Install app</i></li>
-            <li><b>Desktop Chrome / Edge</b> &mdash; install icon in the address bar</li>
-            <li>Once installed it launches full-screen and works offline.</li>
-          </ul>
-        </div>
-      </div>
-      <div class="cta" style="margin-top:40px;">
-        <a class="btn btn-primary" href="./orbital-breaker/">▶ Launch the game ☁️</a>
-      </div>
-    </section>
+    <main class="grid" id="grid" aria-live="polite"></main>
+    <p class="empty" id="empty" hidden>No games match that. Try another search. 🔍</p>
   </div>
 
   <footer>
-    <div class="wrap">
-      <div class="foot-cta">
-        Built with plain HTML5 Canvas &amp; vanilla JavaScript &mdash; zero dependencies.
-      </div>
-      <a href="https://github.com/samkaner/hello-world/tree/claude/brick-breaker-game-repo-7g0iyd/orbital-breaker">Source on GitHub</a>
-    </div>
+    <div class="made">Made with plain HTML, CSS &amp; JavaScript — every game is self-contained &amp; installable.</div>
+    <a href="https://github.com/samkaner/hello-world">Source on GitHub</a>
   </footer>
+
+  <script src="games.js"></script>
+  <script>
+    (function () {
+      var games = window.GAMES || [];
+      var grid = document.getElementById("grid");
+      var empty = document.getElementById("empty");
+      var chipsEl = document.getElementById("chips");
+      var searchEl = document.getElementById("search");
+      document.getElementById("count-pill").textContent =
+        games.filter(function (g) { return g.status === "live"; }).length + " live · " +
+        games.filter(function (g) { return g.status === "soon"; }).length + " soon";
+
+      // build tag filter chips from the registry (dynamic)
+      var allTags = ["All"];
+      games.forEach(function (g) {
+        (g.tags || []).forEach(function (t) { if (allTags.indexOf(t) < 0) allTags.push(t); });
+      });
+      var activeTag = "All";
+      var query = "";
+
+      allTags.forEach(function (t) {
+        var c = document.createElement("button");
+        c.className = "chip" + (t === "All" ? " active" : "");
+        c.textContent = t;
+        c.onclick = function () {
+          activeTag = t;
+          Array.prototype.forEach.call(chipsEl.children, function (el) { el.classList.remove("active"); });
+          c.classList.add("active");
+          render();
+        };
+        chipsEl.appendChild(c);
+      });
+
+      function matches(g) {
+        var okTag = activeTag === "All" || (g.tags || []).indexOf(activeTag) >= 0;
+        var hay = (g.title + " " + g.tagline + " " + (g.tags || []).join(" ") + " " + (g.description || "")).toLowerCase();
+        var okQ = !query || hay.indexOf(query) >= 0;
+        return okTag && okQ;
+      }
+
+      function card(g) {
+        var live = g.status === "live";
+        var el = document.createElement(live ? "a" : "div");
+        el.className = "card " + (live ? "live" : "soon");
+        if (live) el.href = "game.html?id=" + encodeURIComponent(g.id);
+
+        var cover = '<div class="cover" style="--c1:' + g.accent + ';--c2:' + g.accent2 + '">';
+        if (live && g.screenshot) {
+          cover += '<img src="' + g.screenshot + '" alt="' + g.title + ' gameplay" loading="lazy" />';
+        } else {
+          cover += '<span class="big-emoji">' + g.emoji + '</span>';
+        }
+        cover += '<span class="shine"></span>';
+        cover += '<span class="badge' + (live ? "" : " soon") + '">' + (live ? "Play ▶" : "Coming soon") + "</span>";
+        cover += "</div>";
+
+        var tags = (g.tags || []).map(function (t) { return '<span class="tag">' + t + "</span>"; }).join("");
+
+        el.innerHTML =
+          cover +
+          '<div class="card-body">' +
+            '<div class="card-title"><span>' + g.emoji + "</span> " + g.title + "</div>" +
+            '<div class="card-tagline">' + g.tagline + "</div>" +
+            '<div class="tags">' + tags + "</div>" +
+            '<div class="card-foot">' +
+              (live ? '<span class="play-link" style="color:' + g.accent + '">Play now →</span>'
+                    : '<span class="play-link" style="color:var(--muted)">Coming soon</span>') +
+              '<span class="players">' + (g.players || "") + "</span>" +
+            "</div>" +
+          "</div>";
+        return el;
+      }
+
+      function render() {
+        var list = games.filter(matches);
+        // live games first, then soon
+        list.sort(function (a, b) { return (a.status === "live" ? 0 : 1) - (b.status === "live" ? 0 : 1); });
+        grid.innerHTML = "";
+        list.forEach(function (g) { grid.appendChild(card(g)); });
+        empty.hidden = list.length > 0;
+      }
+
+      searchEl.addEventListener("input", function () {
+        query = searchEl.value.trim().toLowerCase();
+        render();
+      });
+
+      render();
+    })();
+  </script>
 </body>
 </html>
