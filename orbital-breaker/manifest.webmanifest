@@ -2,7 +2,6 @@
   "name": "Orbital Breaker",
   "short_name": "Orbital",
   "description": "A brick breaker turned inside-out: your paddle orbits a glowing core while bricks surround you in neon rings.",
-  "id": "/orbital-breaker/",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

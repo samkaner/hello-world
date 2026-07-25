@@ -1,0 +1,36 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/bosses/Grumbleroot.gd" id="Script"]
+[ext_resource type="Texture2D" path="res://assets/bosses/grumbleroot.png" id="Tex"]
+
+[sub_resource type="RectangleShape2D" id="BodyShape"]
+size = Vector2(46, 58)
+
+[sub_resource type="RectangleShape2D" id="HurtShape"]
+size = Vector2(46, 58)
+
+[sub_resource type="RectangleShape2D" id="HazardShape"]
+size = Vector2(96, 40)
+
+[node name="Grumbleroot" type="CharacterBody2D"]
+script = ExtResource("Script")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("Tex")
+centered = true
+region_enabled = true
+region_rect = Rect2(0, 0, 64, 64)
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+shape = SubResource("BodyShape")
+
+[node name="HurtArea" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HurtArea"]
+shape = SubResource("HurtShape")
+
+[node name="HazardArea" type="Area2D" parent="."]
+position = Vector2(0, 20)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HazardArea"]
+shape = SubResource("HazardShape")

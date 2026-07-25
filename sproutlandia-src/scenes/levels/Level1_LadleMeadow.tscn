@@ -1,0 +1,18 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/levels/Level1_LadleMeadow.gd" id="Script"]
+[ext_resource type="Texture2D" path="res://assets/tiles/ground_tile.png" id="GroundTex"]
+[ext_resource type="PackedScene" path="res://scenes/entities/Player.tscn" id="PlayerScene"]
+[ext_resource type="PackedScene" path="res://scenes/ui/HUD.tscn" id="HUDScene"]
+[ext_resource type="PackedScene" path="res://scenes/ui/PauseMenu.tscn" id="PauseMenuScene"]
+
+[node name="Level1LadleMeadow" type="Node2D"]
+script = ExtResource("Script")
+ground_texture = ExtResource("GroundTex")
+
+[node name="Player" parent="." instance=ExtResource("PlayerScene")]
+position = Vector2(40, 190)
+
+[node name="HUD" parent="." instance=ExtResource("HUDScene")]
+
+[node name="PauseMenu" parent="." instance=ExtResource("PauseMenuScene")]

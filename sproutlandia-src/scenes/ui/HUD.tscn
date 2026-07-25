@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/HUD.gd" id="Script"]
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("Script")
+
+[node name="Hearts" type="HBoxContainer" parent="."]
+position = Vector2(12, 12)
+size = Vector2(200, 20)
+theme_override_constants/separation = 4

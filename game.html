@@ -88,6 +88,10 @@
             return "<li><b>" + row[0] + "</b> — " + row[1] + "</li>";
           }).join("") + "</ul></div>";
       }
+      if (live && g.heavy) {
+        panels += '<div class="panel heads-up"><h3>☁️ Heads up — big first load</h3><p>' +
+          g.heavy.note + "</p></div>";
+      }
       if (live) {
         panels += '<div class="panel"><h3>📲 Play &amp; install</h3><ul>' +
           "<li>Runs in any modern browser — <b>" + (g.players || "1 player") + "</b></li>" +

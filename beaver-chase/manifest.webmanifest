@@ -1,0 +1,17 @@
+{
+  "name": "Beaver Chase",
+  "short_name": "Beaver",
+  "description": "A cute Meerca-Chase-inspired snake: steer a bucktoothed beaver, chomp goodies to grow your tail, and survive 30-second woodland levels.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#dff4ff",
+  "theme_color": "#bfe3a0",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -205,6 +205,8 @@ a:hover { text-decoration: underline; }
 .panel li { padding: 8px 0; color: var(--muted); border-bottom: 2px dashed rgba(143,214,255,0.4); }
 .panel li:last-child { border-bottom: none; }
 .panel li b { color: var(--ink); }
+.panel p { color: var(--muted); line-height: 1.65; }
+.panel.heads-up { background: #fffaf0; border-color: #ffe0b0; }
 kbd { display: inline-block; min-width: 22px; text-align: center; padding: 2px 8px; margin: 0 1px;
   border-radius: 8px; font: inherit; font-size: 13px; background: #fff;
   border: 2px solid rgba(95,191,249,0.6); color: var(--blue-deep); }

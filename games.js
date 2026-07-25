@@ -3,7 +3,7 @@
    The single source of truth for the whole library.
 
    To add a new game:
-     1. Drop its self-contained folder in the repo (e.g. /snake/).
+     1. Drop its self-contained folder in the repo (e.g. /beaver-chase/).
      2. Add an entry to the GAMES array below.
    The hub (index.html) and the per-game landing (game.html) render
    themselves from this data — no other code changes needed.
@@ -23,6 +23,8 @@
      players     e.g. "1 player"
      controls    array of [keys, description] rows (optional)
      installable true if the game ships as an installable PWA
+     heavy       optional { mb, note } — shows a friendly "big first load"
+                 warning on the game's landing page
    ============================================================ */
 
 window.GAMES = [
@@ -39,7 +41,7 @@ window.GAMES = [
     accent2: "#b39dff",
     status: "live",
     playUrl: "./orbital-breaker/",
-    screenshot: "./orbital-breaker/screenshot.png",
+    screenshot: "./orbital-breaker/screenshot.webp",
     icon: "./orbital-breaker/icon-512.png",
     tags: ["Arcade", "Brick Breaker", "PWA"],
     players: "1 player",
@@ -54,7 +56,7 @@ window.GAMES = [
 
   // ----- Coming soon (placeholders that prove the library is extensible) -----
   {
-    id: "snake",
+    id: "beaver-chase",
     title: "Beaver Chase",
     emoji: "🦫",
     tagline: "A cuddly, Neopets-flavored snake.",
@@ -66,9 +68,9 @@ window.GAMES = [
     accent: "#7ed957",
     accent2: "#39b54a",
     status: "live",
-    playUrl: "./snake/",
-    screenshot: "./snake/screenshot.png",
-    icon: "./snake/icon-512.png",
+    playUrl: "./beaver-chase/",
+    screenshot: "./beaver-chase/screenshot.webp",
+    icon: "./beaver-chase/icon-512.png",
     tags: ["Arcade", "Snake", "Retro", "PWA"],
     players: "1 player",
     installable: true,
@@ -76,6 +78,40 @@ window.GAMES = [
       ["Arrow keys / WASD", "steer the beaver"],
       ["Swipe / on-screen D-pad", "steer on mobile"],
       ["P · M", "pause · mute"],
+    ],
+  },
+  {
+    id: "sproutlandia",
+    title: "Sproutlandia",
+    emoji: "🌱",
+    tagline: "A very small adventure with a very brave sprout.",
+    description:
+      "A cozy pixel platformer: hop, bonk and swing your way through five " +
+      "handmade worlds — Ladle Meadow, Whispering Grove, Fizzy Falls, the " +
+      "Snoring Stump and Bramble Tower — then face down Grumbleroot and the " +
+      "Big Yawn. Built in Godot, with every sprite and every chiptune made " +
+      "from scratch. It runs right here in your browser. ✨",
+    accent: "#7bc86c",
+    accent2: "#4a9d5f",
+    status: "live",
+    playUrl: "./sproutlandia/",
+    screenshot: "./sproutlandia/screenshot.webp",
+    tags: ["Platformer", "Adventure", "Bosses", "Godot"],
+    players: "1 player",
+    installable: true,
+    heavy: {
+      mb: 40,
+      note:
+        "Sproutlandia is a full little console game compiled to the web, so " +
+        "the first visit downloads about 40 MB. Your browser caches it, so " +
+        "every visit after that starts straight away.",
+    },
+    controls: [
+      ["Arrow keys / WASD", "wander around"],
+      ["Space or Z", "hop"],
+      ["X", "swing your sprig"],
+      ["Esc", "pause"],
+      ["Gamepad", "stick / d-pad, B to hop, Y to swing"],
     ],
   },
   {

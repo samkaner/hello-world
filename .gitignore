@@ -1,0 +1,26 @@
+# ---------------------------------------------------------------
+# Cloud Arcade
+#
+# Layout note: the *playable* web build of Sproutlandia lives in
+# /sproutlandia/ and IS committed — that's what GitHub Pages serves.
+# The Godot project it's built from lives in /sproutlandia-src/.
+# ---------------------------------------------------------------
+
+# Godot 4+ editor scratch
+.godot/
+.import/
+export.cfg
+*.translation
+mono_crash.*.json
+# (export_presets.cfg is committed on purpose: it holds the macOS + Web
+# export config, no signing secrets)
+
+# Local desktop exports (the web build in /sproutlandia/ is committed)
+sproutlandia-src/builds/
+
+# Python (the pixel-art / audio generators)
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
