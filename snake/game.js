@@ -490,14 +490,15 @@
 <ellipse cx="-17" cy="-24" rx="19" ry="12" fill="#fff" opacity="0.22"/>
 <ellipse cx="0" cy="18" rx="30" ry="21" fill="url(#mz)"/>
 <ellipse cx="0" cy="10" rx="21" ry="9" fill="#fff" opacity="0.3"/>
-<circle cx="-36" cy="14" r="10" fill="#ff9dbb" opacity="0.55"/><circle cx="36" cy="14" r="10" fill="#ff9dbb" opacity="0.55"/>
-<path d="M-7 8 Q0 15 7 8 Q0 4 -7 8 Z" fill="#5b3a22"/>
-<rect x="-11" y="20" width="22" height="5.5" rx="2.7" fill="#f0a8bd"/>
-<rect x="-10.5" y="24" width="9.5" height="19" rx="3.2" fill="#fff" stroke="#e2c69c" stroke-width="1"/>
-<rect x="1" y="24" width="9.5" height="19" rx="3.2" fill="#fff" stroke="#e2c69c" stroke-width="1"/>
-<g stroke="#8a5a2f" stroke-width="1.6" opacity="0.42" stroke-linecap="round">
- <line x1="-27" y1="16" x2="-44" y2="12"/><line x1="-27" y1="21" x2="-44" y2="23"/>
- <line x1="27" y1="16" x2="44" y2="12"/><line x1="27" y1="21" x2="44" y2="23"/>
+<circle cx="-36" cy="23" r="9.5" fill="#ff9dbb" opacity="0.5"/><circle cx="36" cy="23" r="9.5" fill="#ff9dbb" opacity="0.5"/>
+<path d="M-7.5 7 Q0 14.5 7.5 7 Q0 3 -7.5 7 Z" fill="#5b3a22"/>
+<path d="M0 13 v5" stroke="#8a6a4a" stroke-width="1.8" stroke-linecap="round" opacity="0.6"/>
+<path d="M-8.5 19 h17 a2.5 2.5 0 0 1 2.5 2.5 v7 a7 7 0 0 1 -7 7 h-8 a7 7 0 0 1 -7 -7 v-7 a2.5 2.5 0 0 1 2.5 -2.5 z" fill="#fdf6e0" stroke="#d8c298" stroke-width="1.7" stroke-linejoin="round"/>
+<path d="M0 20.5 v13.5" stroke="#e2d0aa" stroke-width="1.5" stroke-linecap="round"/>
+<path d="M-6.5 20.5 h13" stroke="#efe2c2" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+<g stroke="#8a5a2f" stroke-width="1.6" opacity="0.4" stroke-linecap="round">
+ <line x1="-26" y1="5" x2="-45" y2="0"/><line x1="-26" y1="11" x2="-45" y2="10"/>
+ <line x1="26" y1="5" x2="45" y2="0"/><line x1="26" y1="11" x2="45" y2="10"/>
 </g></svg>`),
 
     log: svgSprite(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-50 -50 100 100" width="128" height="128">
@@ -600,25 +601,29 @@
     const size = r * 2.95;                          // big head = cute proportions
     if (SPR.beaver.ready) stamp(SPR.beaver, size); else blob("#a9713f", r * 2);
 
-    // eyes drawn on top so they can glance & blink
+    // Beady little animal eyes — small, dark and glossy rather than big and
+    // cartoony. Drawn on top of the sprite so they can glance and blink.
     const k = size / 120;                            // sprite units -> px
-    const ex = 17 * k, ey = -8 * k, er = 8.5 * k;
+    const ex = 16.5 * k, ey = -14 * k, er = 6.2 * k;
     const blink = ((G.time * 0.9 + 0.3) % 4.2) < 0.13;
     for (const sgn of [-1, 1]) {
       const bx = sgn * ex;
       if (blink) {
-        ctx.strokeStyle = "#3a2416"; ctx.lineWidth = Math.max(1.4, 2.6 * k); ctx.lineCap = "round";
-        ctx.beginPath(); ctx.arc(bx, ey, er * 0.7, 0.25 * Math.PI, 0.75 * Math.PI); ctx.stroke();
+        ctx.strokeStyle = "#2a1d12"; ctx.lineWidth = Math.max(1.4, 2.4 * k); ctx.lineCap = "round";
+        ctx.beginPath(); ctx.arc(bx, ey, er * 0.85, 0.22 * Math.PI, 0.78 * Math.PI); ctx.stroke();
       } else {
-        ctx.fillStyle = "#fff";
-        ctx.beginPath(); ctx.ellipse(bx, ey, er, er * 1.1, 0, 0, 7); ctx.fill();
-        ctx.strokeStyle = "#7a4a24"; ctx.lineWidth = Math.max(1, 1.6 * k); ctx.stroke();
-        // pupil looks where the beaver is heading
-        const pxo = dx * er * 0.34, pyo = dy * er * 0.34;
-        ctx.fillStyle = "#2a1d12";
-        ctx.beginPath(); ctx.ellipse(bx + pxo, ey + pyo, er * 0.52, er * 0.6, 0, 0, 7); ctx.fill();
-        ctx.fillStyle = "#fff";
-        ctx.beginPath(); ctx.arc(bx + pxo - er * 0.2, ey + pyo - er * 0.24, er * 0.2, 0, 7); ctx.fill();
+        // soft socket so the bead sits in the fur
+        ctx.fillStyle = "rgba(90,58,30,0.22)";
+        ctx.beginPath(); ctx.arc(bx, ey, er * 1.3, 0, 7); ctx.fill();
+        // the bead itself, nudged toward where the beaver is heading
+        const pxo = dx * er * 0.2, pyo = dy * er * 0.2;
+        ctx.fillStyle = "#241a12";
+        ctx.beginPath(); ctx.arc(bx + pxo, ey + pyo, er, 0, 7); ctx.fill();
+        // glossy catchlights
+        ctx.fillStyle = "rgba(255,255,255,0.92)";
+        ctx.beginPath(); ctx.arc(bx + pxo - er * 0.3, ey + pyo - er * 0.34, er * 0.3, 0, 7); ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.4)";
+        ctx.beginPath(); ctx.arc(bx + pxo + er * 0.28, ey + pyo + er * 0.3, er * 0.16, 0, 7); ctx.fill();
       }
     }
     ctx.restore();
