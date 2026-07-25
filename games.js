@@ -100,11 +100,12 @@ window.GAMES = [
     players: "1 player",
     installable: true,
     heavy: {
-      mb: 40,
+      mb: 10,
       note:
         "Sproutlandia is a full little console game compiled to the web, so " +
-        "the first visit downloads about 40 MB. Your browser caches it, so " +
-        "every visit after that starts straight away.",
+        "the first visit pulls down about 10 MB of engine (a 38 MB build, " +
+        "served gzipped). Your browser caches it, so every visit after that " +
+        "starts straight away.",
     },
     controls: [
       ["Arrow keys / WASD", "wander around"],
