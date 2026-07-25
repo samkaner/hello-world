@@ -115,6 +115,33 @@ window.GAMES = [
     ],
   },
   {
+    id: "puff-pals",
+    title: "Puff Pals",
+    emoji: "🐾",
+    tagline: "Adopt a fluffy little cloud creature.",
+    description:
+      "Pick a puff, name them, and take them home. Feed them cloudcake, " +
+      "scrub them clean, throw a ball, teach them tricks, and pet them until " +
+      "the hearts spill over. Their hunger, energy, fun and cleanliness tick " +
+      "along in real time — even while the tab is closed — so they'll be " +
+      "genuinely pleased to see you. Care for them well and they'll grow up. 💗",
+    accent: "#ff9ec4",
+    accent2: "#b39dff",
+    status: "live",
+    playUrl: "./puff-pals/",
+    screenshot: "./puff-pals/screenshot.webp",
+    icon: "./puff-pals/icon-512.png",
+    tags: ["Virtual Pet", "Cozy", "Idle", "PWA"],
+    players: "1 player",
+    installable: true,
+    controls: [
+      ["Drag on your puff", "pet them 💗 — builds your bond fastest"],
+      ["Feed · Wash · Play", "keep the four meters topped up"],
+      ["Train", "time the sparkle into the pink zone"],
+      ["Tap a mess", "tidy it away"],
+    ],
+  },
+  {
     id: "cloud-runner",
     title: "Cloud Runner",
     emoji: "🏃",

@@ -16,6 +16,7 @@ installs to your home screen if you want it there.
 | [☁️ Orbital Breaker](./orbital-breaker/) | Brick breaker turned inside out — your paddle orbits a cloud while bricks surround you in rings | Canvas + WebAudio, PWA |
 | [🦫 Beaver Chase](./beaver-chase/) | A cuddly Meerca-Chase-flavored snake with 30-second levels | Canvas + WebAudio, PWA |
 | [🌱 Sproutlandia](./sproutlandia/) | A cozy pixel platformer: 5 worlds, 2 bosses, ~25 minutes | Godot 4 → WebAssembly |
+| [🐾 Puff Pals](./puff-pals/) | Adopt a fluffy cloud creature and raise it — needs decay in real time | Canvas + WebAudio, PWA |
 
 ## How the arcade works
 
@@ -37,6 +38,9 @@ game.html       per-game landing page, themed from the registry
 games.js        ← the registry
 arcade.css      shared pastel-cloud theme
 ```
+
+Games with a heavy first download declare a `heavy: { mb, note }` field and the
+landing page grows a friendly warning panel automatically.
 
 ## Sproutlandia — the Godot one
 

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffe3ef" />
+  <meta name="description" content="Puff Pals — adopt a fluffy little cloud creature, then feed it, wash it, play fetch, teach it tricks and watch it grow. A cozy virtual pet in your browser." />
+  <title>Puff Pals 🐾</title>
+
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Puff Pals" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%23ffe3ef'/%3E%3Cellipse cx='28' cy='46' rx='11' ry='17' fill='%23e8b7d0'/%3E%3Cellipse cx='72' cy='46' rx='11' ry='17' fill='%23e8b7d0'/%3E%3Ccircle cx='50' cy='56' r='27' fill='%23fff'/%3E%3Ccircle cx='34' cy='40' r='15' fill='%23fff'/%3E%3Ccircle cx='66' cy='40' r='15' fill='%23fff'/%3E%3Ccircle cx='41' cy='52' r='4' fill='%234a3a44'/%3E%3Ccircle cx='59' cy='52' r='4' fill='%234a3a44'/%3E%3Ccircle cx='42.2' cy='50.6' r='1.4' fill='%23fff'/%3E%3Ccircle cx='60.2' cy='50.6' r='1.4' fill='%23fff'/%3E%3Ccircle cx='33' cy='60' r='5' fill='%23ffb3ce'/%3E%3Ccircle cx='67' cy='60' r='5' fill='%23ffb3ce'/%3E%3Cpath d='M44 61 Q50 66 56 61' stroke='%234a3a44' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="game-wrap">
+  <canvas id="stage"></canvas>
+
+  <!-- ---------- top bar ---------- -->
+  <header id="topbar">
+    <div class="who">
+      <span id="pet-name">…</span>
+      <span id="pet-stage" class="chip">puffling</span>
+    </div>
+    <div class="bond" title="Your bond">
+      <span id="bond-hearts">♡♡♡♡♡</span>
+      <span id="pet-age" class="age">newborn</span>
+    </div>
+  </header>
+
+  <!-- ---------- needs ---------- -->
+  <div id="needs">
+    <div class="need" data-need="food">
+      <span class="need-ico">🍓</span>
+      <div class="meter"><i></i></div>
+    </div>
+    <div class="need" data-need="fun">
+      <span class="need-ico">🎾</span>
+      <div class="meter"><i></i></div>
+    </div>
+    <div class="need" data-need="clean">
+      <span class="need-ico">🫧</span>
+      <div class="meter"><i></i></div>
+    </div>
+    <div class="need" data-need="energy">
+      <span class="need-ico">💤</span>
+      <div class="meter"><i></i></div>
+    </div>
+  </div>
+
+  <!-- ---------- speech bubble ---------- -->
+  <div id="say" class="hidden"><span id="say-text"></span></div>
+
+  <!-- ---------- action bar ---------- -->
+  <nav id="actions">
+    <button class="act" data-act="feed"><span>🍓</span><b>Feed</b></button>
+    <button class="act" data-act="play"><span>🎾</span><b>Play</b></button>
+    <button class="act" data-act="wash"><span>🫧</span><b>Wash</b></button>
+    <button class="act" data-act="train"><span>🎓</span><b>Train</b></button>
+    <button class="act" data-act="sleep"><span>🌙</span><b>Sleep</b></button>
+  </nav>
+
+  <!-- ---------- adopt ---------- -->
+  <div id="adopt" class="overlay">
+    <div class="panel">
+      <div class="mascot">🐾</div>
+      <h1 class="title">PUFF<span>PALS</span></h1>
+      <p class="tagline">A little cloud creature is looking for someone.</p>
+
+      <div id="adopt-step-1">
+        <p class="prompt">Who would you like to take home?</p>
+        <div id="litter"></div>
+        <p class="hint">Tap a puff to meet them 💗</p>
+      </div>
+
+      <div id="adopt-step-2" class="hidden">
+        <canvas id="adopt-preview" width="260" height="220"></canvas>
+        <p class="prompt" id="adopt-blurb">What will you call them?</p>
+        <input id="name-input" maxlength="12" placeholder="Mochi" aria-label="Your puff's name" autocomplete="off" />
+        <div class="row">
+          <button id="adopt-back" class="btn ghost">← Someone else</button>
+          <button id="adopt-go" class="btn">Take them home 🏡</button>
+        </div>
+      </div>
+
+      <p class="back"><a href="../">← Cloud Arcade</a></p>
+    </div>
+  </div>
+
+  <!-- ---------- food tray ---------- -->
+  <div id="tray" class="overlay hidden">
+    <div class="panel small">
+      <h2 class="msg-title">Snack time 🍽️</h2>
+      <p class="msg-sub" id="tray-sub">What sounds good?</p>
+      <div id="foods"></div>
+      <button class="btn ghost" data-close="tray">Never mind</button>
+    </div>
+  </div>
+
+  <!-- ---------- training ---------- -->
+  <div id="training" class="overlay hidden">
+    <div class="panel small">
+      <h2 class="msg-title" id="train-title">Teach a trick 🎓</h2>
+      <p class="msg-sub" id="train-sub">Pick something to practise.</p>
+
+      <div id="trick-list"></div>
+
+      <div id="trick-game" class="hidden">
+        <p class="prompt" id="trick-prompt">Stop the sparkle in the pink zone!</p>
+        <div id="timing">
+          <div id="timing-zone"></div>
+          <div id="timing-marker"></div>
+        </div>
+        <div id="trick-pips"></div>
+        <button id="trick-hit" class="btn">Now! ✨</button>
+      </div>
+
+      <button class="btn ghost" data-close="training">Done for now</button>
+    </div>
+  </div>
+
+  <!-- ---------- care card ---------- -->
+  <div id="care" class="overlay hidden">
+    <div class="panel small">
+      <h2 class="msg-title" id="care-title">☁️</h2>
+      <p class="msg-sub" id="care-body"></p>
+      <button class="btn" data-close="care">Aww, okay 💗</button>
+    </div>
+  </div>
+
+  <button id="sound-btn" class="icon-btn" aria-label="Mute">🔊</button>
+  <button id="menu-btn" class="icon-btn" aria-label="Menu">⋯</button>
+
+  <!-- ---------- little menu ---------- -->
+  <div id="menu" class="overlay hidden">
+    <div class="panel small">
+      <h2 class="msg-title">Puff Pals</h2>
+      <p class="msg-sub" id="menu-stats"></p>
+      <button class="btn ghost" data-close="menu">Back to my puff</button>
+      <button id="rehome" class="btn danger">Start over with a new puff</button>
+      <p class="back"><a href="../">← Cloud Arcade</a></p>
+    </div>
+  </div>
+
+  <!-- ---------- start-over confirmation ---------- -->
+  <div id="rehome-confirm" class="overlay hidden">
+    <div class="panel small">
+      <div class="mascot">🥺</div>
+      <h2 class="msg-title">Really start over?</h2>
+      <p class="msg-sub" id="rehome-body"></p>
+      <button class="btn" data-close="rehome-confirm">Never mind, I'll stay 💗</button>
+      <button id="rehome-yes" class="btn danger">Yes, start over</button>
+    </div>
+  </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>

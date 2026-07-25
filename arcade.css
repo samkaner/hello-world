@@ -190,6 +190,8 @@ a:hover { text-decoration: underline; }
 .game-desc { margin-top: 16px; font-size: 15.5px; color: var(--ink); }
 .game-cta { margin-top: 26px; display: flex; gap: 14px; flex-wrap: wrap; }
 .shot {
+  /* block, or the anchor lays out inline and its border juts past the image */
+  display: block;
   border-radius: 24px; overflow: hidden; line-height: 0;
   border: 3px solid rgba(255,255,255,0.9); box-shadow: var(--shadow);
 }
