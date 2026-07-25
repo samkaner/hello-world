@@ -104,6 +104,14 @@
   }
   window.addEventListener("resize", resize);
 
+  // decorative grass tufts (fractions of the board, stable across resizes)
+  const tufts = [];
+  (function seedTufts() {
+    let s = 1337;
+    const rnd = () => ((s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+    for (let i = 0; i < 26; i++) tufts.push({ x: rnd(), y: rnd() });
+  })();
+
   // grid -> pixel center
   const px = (gx) => boardX + gx * cell + cell / 2;
   const py = (gy) => boardY + gy * cell + cell / 2;
@@ -127,6 +135,7 @@
     shake: 0,
     time: 0,
     target: 0,
+    pop: 0,          // chomp squash-and-stretch timer
   };
 
   // snake as list of grid cells (head first); prev = pre-tick copy for lerp
@@ -339,6 +348,7 @@
     G.score += gained;
     grow += it.grow;
     if (it.speed) G.speedT = 3;
+    G.pop = 1;
     floater(px(it.x), py(it.y), "+" + gained + (mult > 1 ? " x" + mult : ""), it.k === "gem" ? "#ffd54a" : "#3f7d3a");
     puff(px(it.x), py(it.y), it.g);
     Sound.play(it.k === "gem" ? "gem" : "chomp");
@@ -369,6 +379,7 @@
   function update(dt) {
     G.time += dt;
     if (G.shake > 0) G.shake *= 0.86;
+    if (G.pop > 0) G.pop = Math.max(0, G.pop - dt * 5);
     // decay floaters/puffs always
     floaters = floaters.filter((f) => (f.y -= 0.5, f.life -= dt * 1.4, f.life > 0));
     puffs = puffs.filter((p) => (p.x += p.vx, p.y += p.vy, p.vx *= 0.9, p.vy *= 0.9, p.life -= dt * 2, p.life > 0));
@@ -447,228 +458,169 @@
     ctx.beginPath(); ctx.ellipse(0, ry * 1.2, rx, ry, 0, 0, 7); ctx.fill();
   }
 
-  // ---------- SVG sprite: crafted vector beaver, stamped into the canvas ----------
-  // Vector art (markup) rasterizes crisply at any size/DPR. Faces +x (forward).
-  const BEAVER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-60 -60 120 120" width="256" height="256">
- <defs>
-  <radialGradient id="fur" cx="-18" cy="-20" r="70" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#cd9459"/><stop offset="1" stop-color="#985f31"/></radialGradient>
-  <radialGradient id="rim" cx="0" cy="0" r="52" gradientUnits="userSpaceOnUse"><stop offset="0.68" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#5b3a1e" stop-opacity="0.32"/></radialGradient>
-  <linearGradient id="muz" x1="0" y1="-35" x2="0" y2="35" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#f5e0bf"/><stop offset="1" stop-color="#e4c497"/></linearGradient>
- </defs>
- <g stroke="#6e4423" stroke-width="4" stroke-linejoin="round"><circle cx="-27" cy="-33" r="15" fill="#8a5a2f"/><circle cx="27" cy="-33" r="15" fill="#8a5a2f"/></g>
- <circle cx="-27" cy="-32" r="7" fill="#e79bb0"/><circle cx="27" cy="-32" r="7" fill="#e79bb0"/>
- <ellipse cx="0" cy="0" rx="51" ry="46" fill="url(#fur)" stroke="#6e4423" stroke-width="4"/>
- <ellipse cx="0" cy="0" rx="51" ry="46" fill="url(#rim)"/>
- <ellipse cx="-16" cy="-18" rx="20" ry="13" fill="#fff" opacity="0.18"/>
- <circle cx="-6" cy="29" r="10" fill="#ff9bb0" opacity="0.5"/><circle cx="-6" cy="-29" r="10" fill="#ff9bb0" opacity="0.5"/>
- <ellipse cx="24" cy="0" rx="31" ry="35" fill="url(#muz)"/>
- <ellipse cx="20" cy="-11" rx="19" ry="11" fill="#fff" opacity="0.25"/>
- <ellipse cx="2" cy="20" rx="7.5" ry="9.5" fill="#2a1d12"/><ellipse cx="2" cy="-20" rx="7.5" ry="9.5" fill="#2a1d12"/>
- <circle cx="5" cy="16.5" r="3" fill="#fff"/><circle cx="5" cy="-23.5" r="3" fill="#fff"/>
- <path d="M44 -7 L53 0 L44 7 Z" fill="#4a2f1c"/><circle cx="46.5" cy="-2.5" r="2" fill="#fff" opacity="0.5"/>
- <rect x="42" y="-10.5" width="21" height="6" rx="3" fill="#e79bb0"/>
- <rect x="44" y="-6.5" width="9" height="22" rx="3" fill="#fff" stroke="#e6c9a0" stroke-width="0.8"/>
- <rect x="54" y="-6.5" width="9" height="22" rx="3" fill="#fff" stroke="#e6c9a0" stroke-width="0.8"/>
- <g stroke="#6e4423" stroke-width="1.4" opacity="0.5" stroke-linecap="round"><line x1="30" y1="10" x2="52" y2="6"/><line x1="30" y1="16" x2="52" y2="18"/><line x1="30" y1="-10" x2="52" y2="-6"/><line x1="30" y1="-16" x2="52" y2="-18"/></g>
-</svg>`;
-  const beaverImg = new Image();
-  let beaverReady = false;
-  beaverImg.onload = () => { beaverReady = true; };
-  beaverImg.src = "data:image/svg+xml;charset=utf8," + encodeURIComponent(BEAVER_SVG);
+  // ---------- SVG sprites ----------
+  // Art is authored as layered vector markup, then stamped into the canvas.
+  // Vectors rasterize crisply at any size / device pixel ratio.
+  function svgSprite(svg) {
+    const im = new Image();
+    im.ready = false;
+    im.onload = () => { im.ready = true; };
+    im.src = "data:image/svg+xml;charset=utf8," + encodeURIComponent(svg);
+    return im;
+  }
+  function stamp(im, size) { ctx.drawImage(im, -size / 2, -size / 2, size, size); }
 
-  function drawBeaverHead(cx2, cy2, ang, r) {
-    ctx.save();
-    ctx.translate(cx2, cy2);
-    groundShadow(r * 0.95, r * 0.4);
-    // Preferred path: stamp the crafted SVG sprite (crisp at any DPR).
-    if (beaverReady) {
-      ctx.rotate(ang);
-      const w = r * 2.4;
-      ctx.drawImage(beaverImg, -w / 2, -w / 2, w, w);
-      ctx.restore();
-      return;
-    }
-    // Fallback (until the sprite loads): the hand-coded beaver.
-    ctx.rotate(ang);
-    const OL = "#6e4423";
-    ctx.lineJoin = "round"; ctx.lineCap = "round";
-    // ears (outlined, pink inner)
-    for (const sgn of [-1, 1]) {
-      ctx.fillStyle = "#8a5a2f";
-      ctx.beginPath(); ctx.arc(sgn * r * 0.55, -r * 0.66, r * 0.3, 0, 7); ctx.fill();
-      ctx.lineWidth = r * 0.07; ctx.strokeStyle = OL; ctx.stroke();
-      ctx.fillStyle = "#e79bb0";
-      ctx.beginPath(); ctx.arc(sgn * r * 0.55, -r * 0.64, r * 0.15, 0, 7); ctx.fill();
-    }
-    // head — radial-shaded fur with a clean outline
-    const g = ctx.createRadialGradient(-r * 0.35, -r * 0.4, r * 0.2, 0, 0, r * 1.35);
-    g.addColorStop(0, "#c58f56"); g.addColorStop(1, "#9c6636");
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.ellipse(0, 0, r * 1.02, r * 0.92, 0, 0, 7); ctx.fill();
-    ctx.lineWidth = r * 0.08; ctx.strokeStyle = OL; ctx.stroke();
-    // muzzle + soft under-shade
-    ctx.fillStyle = "#efd8b4";
-    ctx.beginPath(); ctx.ellipse(r * 0.48, 0, r * 0.62, r * 0.7, 0, 0, 7); ctx.fill();
-    ctx.fillStyle = "rgba(150,110,70,0.16)";
-    ctx.beginPath(); ctx.ellipse(r * 0.5, r * 0.3, r * 0.5, r * 0.28, 0, 0, 7); ctx.fill();
-    // cheeks
-    ctx.fillStyle = "rgba(255,150,170,0.5)";
-    ctx.beginPath(); ctx.arc(-r * 0.12, r * 0.58, r * 0.19, 0, 7); ctx.arc(-r * 0.12, -r * 0.58, r * 0.19, 0, 7); ctx.fill();
-    // eyes (occasional blink) — sparkly
-    const blink = ((G.time + cx2 * 0.017) % 3.7) < 0.12;
-    for (const sgn of [-1, 1]) {
-      if (blink) {
-        ctx.strokeStyle = "#2a1d12"; ctx.lineWidth = r * 0.07;
-        ctx.beginPath(); ctx.moveTo(-r * 0.06, sgn * r * 0.4); ctx.lineTo(r * 0.14, sgn * r * 0.4); ctx.stroke();
-      } else {
-        ctx.fillStyle = "#2a1d12";
-        ctx.beginPath(); ctx.ellipse(r * 0.04, sgn * r * 0.4, r * 0.15, r * 0.19, 0, 0, 7); ctx.fill();
-        ctx.fillStyle = "#fff";
-        ctx.beginPath(); ctx.arc(r * 0.1, sgn * r * 0.4 - r * 0.06, r * 0.06, 0, 7); ctx.fill();
-      }
-    }
-    // nose (little triangle with a shine)
-    ctx.fillStyle = "#4a2f1c";
-    ctx.beginPath(); ctx.moveTo(r * 0.88, -r * 0.14); ctx.lineTo(r * 1.06, 0); ctx.lineTo(r * 0.88, r * 0.14); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.beginPath(); ctx.arc(r * 0.93, -r * 0.05, r * 0.04, 0, 7); ctx.fill();
-    // buck teeth (pink gum + two rounded teeth)
-    ctx.fillStyle = "#e79bb0"; roundRect(r * 0.84, -r * 0.2, r * 0.42, r * 0.12, r * 0.05); ctx.fill();
-    ctx.fillStyle = "#fff";
-    roundRect(r * 0.88, -r * 0.13, r * 0.18, r * 0.44, r * 0.06); ctx.fill();
-    roundRect(r * 0.88 + r * 0.2, -r * 0.13, r * 0.18, r * 0.44, r * 0.06); ctx.fill();
-    // whisker dots
-    ctx.fillStyle = "rgba(90,60,35,0.5)";
-    for (const sgn of [-1, 1]) for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(r * 0.32 + i * r * 0.11, sgn * r * 0.17, r * 0.02, 0, 7); ctx.fill(); }
-    ctx.restore();
-  }
+  // The beaver's face always stays upright and facing the player — a rotating
+  // face reads as uncanny. Personality comes from a lean into turns, eyes that
+  // glance where you're steering, blinks, and a squash-pop when chomping.
+  // Eyes are drawn in canvas on top so they can look around and blink.
+  const SPR = {
+    beaver: svgSprite(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-60 -60 120 120" width="256" height="256">
+<defs>
+ <radialGradient id="f" cx="-14" cy="-22" r="66" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#d59d63"/><stop offset="1" stop-color="#a06937"/></radialGradient>
+ <radialGradient id="rm" cx="0" cy="-4" r="50" gradientUnits="userSpaceOnUse"><stop offset="0.72" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#5b3a1e" stop-opacity="0.26"/></radialGradient>
+ <linearGradient id="mz" x1="0" y1="-4" x2="0" y2="36" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fbeed4"/><stop offset="1" stop-color="#eed6ae"/></linearGradient>
+</defs>
+<g stroke="#7a4a24" stroke-width="4.5" stroke-linejoin="round">
+ <circle cx="-34" cy="-30" r="15" fill="#a06937"/><circle cx="34" cy="-30" r="15" fill="#a06937"/>
+</g>
+<circle cx="-34" cy="-29" r="6.5" fill="#f0a8bd"/><circle cx="34" cy="-29" r="6.5" fill="#f0a8bd"/>
+<ellipse cx="0" cy="-2" rx="49" ry="45" fill="url(#f)" stroke="#7a4a24" stroke-width="4.5"/>
+<ellipse cx="0" cy="-2" rx="49" ry="45" fill="url(#rm)"/>
+<ellipse cx="-17" cy="-24" rx="19" ry="12" fill="#fff" opacity="0.22"/>
+<ellipse cx="0" cy="18" rx="30" ry="21" fill="url(#mz)"/>
+<ellipse cx="0" cy="10" rx="21" ry="9" fill="#fff" opacity="0.3"/>
+<circle cx="-36" cy="14" r="10" fill="#ff9dbb" opacity="0.55"/><circle cx="36" cy="14" r="10" fill="#ff9dbb" opacity="0.55"/>
+<path d="M-7 8 Q0 15 7 8 Q0 4 -7 8 Z" fill="#5b3a22"/>
+<rect x="-11" y="20" width="22" height="5.5" rx="2.7" fill="#f0a8bd"/>
+<rect x="-10.5" y="24" width="9.5" height="19" rx="3.2" fill="#fff" stroke="#e2c69c" stroke-width="1"/>
+<rect x="1" y="24" width="9.5" height="19" rx="3.2" fill="#fff" stroke="#e2c69c" stroke-width="1"/>
+<g stroke="#8a5a2f" stroke-width="1.6" opacity="0.42" stroke-linecap="round">
+ <line x1="-27" y1="16" x2="-44" y2="12"/><line x1="-27" y1="21" x2="-44" y2="23"/>
+ <line x1="27" y1="16" x2="44" y2="12"/><line x1="27" y1="21" x2="44" y2="23"/>
+</g></svg>`),
 
-  // ----- drawn collectibles / props (color-consistent across every device) -----
-  function drawLog(cx2, cy2, s) {
-    const w = s * 0.72, h = s * 0.42;
-    ctx.save(); ctx.translate(cx2, cy2);
-    groundShadow(w * 0.48, h * 0.34);
-    ctx.rotate(-0.26); ctx.lineJoin = "round";
-    const g = ctx.createLinearGradient(0, -h / 2, 0, h / 2);
-    g.addColorStop(0, "#c08a4e"); g.addColorStop(1, "#9c6a38");
-    ctx.fillStyle = g; roundRect(-w / 2, -h / 2, w, h, h / 2); ctx.fill();
-    ctx.lineWidth = Math.max(1, s * 0.03); ctx.strokeStyle = "#7a5230"; roundRect(-w / 2, -h / 2, w, h, h / 2); ctx.stroke();
-    ctx.strokeStyle = "rgba(90,60,30,0.3)"; ctx.lineWidth = Math.max(1, s * 0.02);
-    ctx.beginPath(); ctx.moveTo(-w * 0.12, -h * 0.18); ctx.lineTo(w * 0.32, -h * 0.18); ctx.moveTo(-w * 0.06, h * 0.12); ctx.lineTo(w * 0.34, h * 0.12); ctx.stroke();
-    ctx.fillStyle = "#e7c38a"; ctx.beginPath(); ctx.ellipse(-w / 2 + h * 0.32, 0, h * 0.34, h * 0.46, 0, 0, 7); ctx.fill();
-    ctx.strokeStyle = "#b98a4f"; ctx.lineWidth = Math.max(1, s * 0.018);
-    ctx.beginPath(); ctx.ellipse(-w / 2 + h * 0.32, 0, h * 0.2, h * 0.28, 0, 0, 7); ctx.stroke();
-    ctx.beginPath(); ctx.ellipse(-w / 2 + h * 0.32, 0, h * 0.08, h * 0.12, 0, 0, 7); ctx.stroke();
-    ctx.restore();
-  }
-  function drawAcorn(cx2, cy2, s) {
-    ctx.save(); ctx.translate(cx2, cy2); ctx.lineJoin = "round";
-    groundShadow(s * 0.26, s * 0.12);
-    const g = ctx.createLinearGradient(0, -s * 0.1, 0, s * 0.4);
-    g.addColorStop(0, "#d59a4e"); g.addColorStop(1, "#b5762f");
-    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, s * 0.12, s * 0.25, s * 0.29, 0, 0, 7); ctx.fill();
-    ctx.lineWidth = Math.max(1, s * 0.028); ctx.strokeStyle = "#8a5a24"; ctx.stroke();
-    ctx.fillStyle = "#7a4a24";
-    ctx.beginPath(); ctx.moveTo(-s * 0.28, -s * 0.02); ctx.quadraticCurveTo(0, -s * 0.4, s * 0.28, -s * 0.02);
-    ctx.quadraticCurveTo(0, s * 0.08, -s * 0.28, -s * 0.02); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = "#5b3b22"; ctx.lineWidth = Math.max(1, s * 0.025); ctx.stroke();
-    ctx.fillStyle = "rgba(60,38,20,0.4)";
-    for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.arc(i * s * 0.08, -s * 0.1, s * 0.02, 0, 7); ctx.fill(); }
-    ctx.fillStyle = "#5b3b22"; roundRect(-s * 0.04, -s * 0.4, s * 0.08, s * 0.14, s * 0.03); ctx.fill();
-    ctx.fillStyle = "rgba(255,255,255,0.35)"; ctx.beginPath(); ctx.ellipse(-s * 0.09, s * 0.08, s * 0.06, s * 0.1, -0.3, 0, 7); ctx.fill();
-    ctx.restore();
-  }
-  function drawBerry(cx2, cy2, s) {
-    ctx.save(); ctx.translate(cx2, cy2); ctx.lineJoin = "round";
-    groundShadow(s * 0.26, s * 0.12);
-    const g = ctx.createLinearGradient(0, -s * 0.2, 0, s * 0.34);
-    g.addColorStop(0, "#ff5d63"); g.addColorStop(1, "#d62f39");
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.moveTo(0, s * 0.33);
-    ctx.quadraticCurveTo(-s * 0.3, s * 0.12, -s * 0.24, -s * 0.1);
-    ctx.quadraticCurveTo(-s * 0.16, -s * 0.26, 0, -s * 0.22);
-    ctx.quadraticCurveTo(s * 0.16, -s * 0.26, s * 0.24, -s * 0.1);
-    ctx.quadraticCurveTo(s * 0.3, s * 0.12, 0, s * 0.33);
-    ctx.closePath(); ctx.fill();
-    ctx.lineWidth = Math.max(1, s * 0.025); ctx.strokeStyle = "#b3242d"; ctx.stroke();
-    ctx.fillStyle = "#ffe9a8";
-    for (const [sx, sy] of [[-0.1, 0.02], [0.1, 0.02], [0, 0.16], [-0.14, 0.15], [0.14, 0.15], [-0.05, -0.08], [0.05, -0.08]]) {
-      ctx.save(); ctx.translate(sx * s, sy * s); ctx.rotate(0.4); ctx.beginPath(); ctx.ellipse(0, 0, s * 0.02, s * 0.035, 0, 0, 7); ctx.fill(); ctx.restore();
-    }
-    ctx.fillStyle = "#4faa46";
-    for (let k = -2; k <= 2; k++) { ctx.save(); ctx.rotate(k * 0.4); ctx.beginPath(); ctx.moveTo(0, -s * 0.16); ctx.lineTo(-s * 0.06, -s * 0.3); ctx.lineTo(s * 0.06, -s * 0.3); ctx.closePath(); ctx.fill(); ctx.restore(); }
-    ctx.fillStyle = "#3f9e43"; ctx.beginPath(); ctx.arc(0, -s * 0.19, s * 0.07, 0, 7); ctx.fill();
-    ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.beginPath(); ctx.ellipse(-s * 0.09, -s * 0.02, s * 0.05, s * 0.08, -0.4, 0, 7); ctx.fill();
-    ctx.restore();
-  }
-  function drawGem(cx2, cy2, s) {
-    const r = s * 0.28;
-    ctx.save(); ctx.translate(cx2, cy2); ctx.lineJoin = "round";
-    groundShadow(r * 0.9, r * 0.4);
-    const g = ctx.createLinearGradient(0, -r, 0, r);
-    g.addColorStop(0, "#8fe6f2"); g.addColorStop(1, "#3bb6d4");
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.moveTo(0, -r); ctx.lineTo(r * 0.62, -r * 0.35); ctx.lineTo(r * 0.42, r); ctx.lineTo(-r * 0.42, r); ctx.lineTo(-r * 0.62, -r * 0.35); ctx.closePath(); ctx.fill();
-    ctx.lineWidth = Math.max(1, s * 0.022); ctx.strokeStyle = "#2b93ad"; ctx.stroke();
-    ctx.strokeStyle = "rgba(255,255,255,0.6)"; ctx.lineWidth = Math.max(1, s * 0.016);
-    ctx.beginPath();
-    ctx.moveTo(-r * 0.62, -r * 0.35); ctx.lineTo(r * 0.62, -r * 0.35);
-    ctx.moveTo(0, -r); ctx.lineTo(-r * 0.2, -r * 0.35); ctx.lineTo(-r * 0.42, r);
-    ctx.moveTo(0, -r); ctx.lineTo(r * 0.2, -r * 0.35); ctx.lineTo(r * 0.42, r);
-    ctx.moveTo(-r * 0.2, -r * 0.35); ctx.lineTo(0, r); ctx.lineTo(r * 0.2, -r * 0.35);
-    ctx.stroke();
-    ctx.fillStyle = "rgba(255,255,255,0.85)"; ctx.beginPath(); ctx.arc(-r * 0.28, -r * 0.5, r * 0.08, 0, 7); ctx.fill();
-    ctx.restore();
-  }
+    log: svgSprite(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-50 -50 100 100" width="128" height="128">
+<defs><linearGradient id="l" x1="0" y1="-20" x2="0" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#c98f52"/><stop offset="1" stop-color="#9a6633"/></linearGradient></defs>
+<g transform="rotate(-16)">
+<rect x="-34" y="-19" width="68" height="38" rx="19" fill="url(#l)" stroke="#7a5230" stroke-width="4"/>
+<g stroke="#7a5230" stroke-width="2" opacity="0.35" stroke-linecap="round"><line x1="-8" y1="-9" x2="22" y2="-9"/><line x1="-4" y1="6" x2="24" y2="6"/></g>
+<ellipse cx="-20" cy="0" rx="13" ry="17" fill="#efd2a4" stroke="#c69a63" stroke-width="2.5"/>
+<ellipse cx="-20" cy="0" rx="7.5" ry="10" fill="none" stroke="#c69a63" stroke-width="2"/>
+<circle cx="-20" cy="0" r="2.6" fill="#c69a63"/></g></svg>`),
+
+    acorn: svgSprite(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-50 -50 100 100" width="128" height="128">
+<defs><linearGradient id="a" x1="0" y1="-6" x2="0" y2="34" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#e2a862"/><stop offset="1" stop-color="#b8762e"/></linearGradient></defs>
+<ellipse cx="0" cy="10" rx="25" ry="28" fill="url(#a)" stroke="#8a5a24" stroke-width="4"/>
+<ellipse cx="-9" cy="6" rx="6" ry="10" fill="#fff" opacity="0.35"/>
+<path d="M-29 -4 Q0 -38 29 -4 Q0 8 -29 -4 Z" fill="#7a4a24" stroke="#5b3b22" stroke-width="3.5" stroke-linejoin="round"/>
+<g fill="#5b3b22" opacity="0.45"><circle cx="-16" cy="-9" r="2.4"/><circle cx="-6" cy="-13" r="2.4"/><circle cx="5" cy="-13" r="2.4"/><circle cx="15" cy="-9" r="2.4"/></g>
+<rect x="-3.5" y="-40" width="7" height="13" rx="3.4" fill="#5b3b22"/></svg>`),
+
+    berry: svgSprite(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-50 -50 100 100" width="128" height="128">
+<defs><linearGradient id="b" x1="0" y1="-22" x2="0" y2="34" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff6b73"/><stop offset="1" stop-color="#d42d38"/></linearGradient></defs>
+<path d="M0 36 Q-31 13 -25 -10 Q-17 -28 0 -23 Q17 -28 25 -10 Q31 13 0 36 Z" fill="url(#b)" stroke="#b3242d" stroke-width="4" stroke-linejoin="round"/>
+<g fill="#ffe9a8"><ellipse cx="-10" cy="2" rx="2.4" ry="3.6"/><ellipse cx="10" cy="2" rx="2.4" ry="3.6"/><ellipse cx="0" cy="16" rx="2.4" ry="3.6"/><ellipse cx="-14" cy="16" rx="2.4" ry="3.6"/><ellipse cx="14" cy="16" rx="2.4" ry="3.6"/><ellipse cx="-5" cy="-9" rx="2.4" ry="3.6"/><ellipse cx="5" cy="-9" rx="2.4" ry="3.6"/></g>
+<ellipse cx="-11" cy="-4" rx="5" ry="8" fill="#fff" opacity="0.4" transform="rotate(-20 -11 -4)"/>
+<g fill="#4faa46" stroke="#3f8e3a" stroke-width="2.5" stroke-linejoin="round"><path d="M0 -18 L-13 -33 L2 -27 Z"/><path d="M0 -18 L13 -33 L-2 -27 Z"/><path d="M0 -16 L0 -34 L9 -24 Z"/></g>
+<circle cx="0" cy="-20" r="6" fill="#3f9e43"/></svg>`),
+
+    gem: svgSprite(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-50 -50 100 100" width="128" height="128">
+<defs><linearGradient id="g" x1="0" y1="-30" x2="0" y2="32" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#a5f0fa"/><stop offset="1" stop-color="#37b3d6"/></linearGradient></defs>
+<path d="M0 -31 L20 -12 L13 31 L-13 31 L-20 -12 Z" fill="url(#g)" stroke="#2b93ad" stroke-width="4" stroke-linejoin="round"/>
+<g stroke="#fff" stroke-width="2" opacity="0.65" fill="none"><path d="M-20 -12 L20 -12"/><path d="M0 -31 L-7 -12 L-13 31"/><path d="M0 -31 L7 -12 L13 31"/><path d="M-7 -12 L0 31 L7 -12"/></g>
+<circle cx="-9" cy="-18" r="3.2" fill="#fff" opacity="0.9"/></svg>`),
+
+    rock: svgSprite(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-50 -50 100 100" width="128" height="128">
+<defs><linearGradient id="r" x1="0" y1="-30" x2="0" y2="30" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#c3c8cd"/><stop offset="1" stop-color="#878e95"/></linearGradient></defs>
+<path d="M-30 18 Q-39 -9 -12 -26 Q17 -35 32 -6 Q41 20 10 28 Q-16 32 -30 18 Z" fill="url(#r)" stroke="#6f767c" stroke-width="4" stroke-linejoin="round"/>
+<path d="M-2 -20 L7 -2 L-4 14" fill="none" stroke="#6f767c" stroke-width="2.4" opacity="0.5" stroke-linecap="round"/>
+<ellipse cx="-9" cy="-12" rx="12" ry="6" fill="#fff" opacity="0.35" transform="rotate(-22 -9 -12)"/></svg>`),
+
+    fish: svgSprite(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-50 -50 100 100" width="128" height="128">
+<defs><linearGradient id="fi" x1="0" y1="-20" x2="0" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8fd3e2"/><stop offset="1" stop-color="#4f97a8"/></linearGradient></defs>
+<path d="M20 0 L44 -19 Q36 0 44 19 Z" fill="#4f97a8" stroke="#3f7d8c" stroke-width="3.5" stroke-linejoin="round"/>
+<path d="M-2 -19 L-15 -33 L11 -21 Z" fill="#4f97a8" stroke="#3f7d8c" stroke-width="3.5" stroke-linejoin="round"/>
+<ellipse cx="0" cy="0" rx="31" ry="21" fill="url(#fi)" stroke="#3f7d8c" stroke-width="3.5"/>
+<ellipse cx="-2" cy="9" rx="22" ry="8" fill="#fff" opacity="0.35"/>
+<path d="M-2 -11 Q4 0 -2 11" fill="none" stroke="#3f7d8c" stroke-width="2.4" opacity="0.6"/>
+<circle cx="-15" cy="-3" r="7.5" fill="#fff"/><circle cx="-16" cy="-3" r="3.8" fill="#12303a"/>
+<circle cx="-17.5" cy="-4.5" r="1.4" fill="#fff"/>
+<path d="M-25 -15 L-7 -8" stroke="#2b5560" stroke-width="3.4" stroke-linecap="round"/></svg>`),
+
+    tail: svgSprite(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-50 -50 100 100" width="128" height="128">
+<defs><linearGradient id="t" x1="0" y1="-26" x2="0" y2="26" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#bd854e"/><stop offset="1" stop-color="#8a5c30"/></linearGradient></defs>
+<ellipse cx="4" cy="0" rx="40" ry="27" fill="url(#t)" stroke="#6e4423" stroke-width="4.5"/>
+<g stroke="#6e4423" stroke-width="2" opacity="0.28" stroke-linecap="round">
+ <path d="M-24 -13 L34 -8"/><path d="M-28 0 L38 0"/><path d="M-24 13 L34 8"/>
+ <path d="M-10 -20 L-6 20"/><path d="M12 -18 L15 18"/></g></svg>`),
+  };
+
+  // fallback fill while a sprite decodes (a frame or two at most)
+  function blob(color, s) { ctx.fillStyle = color; ctx.beginPath(); ctx.arc(0, 0, s * 0.28, 0, 7); ctx.fill(); }
+
   function drawItemGlyph(kind, cx2, cy2, s) {
-    if (kind === "log") drawLog(cx2, cy2, s);
-    else if (kind === "acorn") drawAcorn(cx2, cy2, s);
-    else if (kind === "berry") drawBerry(cx2, cy2, s);
-    else drawGem(cx2, cy2, s);
+    const im = SPR[kind] || SPR.log;
+    ctx.save(); ctx.translate(cx2, cy2);
+    groundShadow(s * 0.26, s * 0.11);
+    if (im.ready) stamp(im, s * 0.92);
+    else blob(kind === "berry" ? "#e5484d" : kind === "gem" ? "#5fd0e5" : "#b07a43", s);
+    ctx.restore();
   }
   function drawRock(cx2, cy2, s) {
-    ctx.save(); ctx.translate(cx2, cy2); ctx.lineJoin = "round";
-    groundShadow(s * 0.32, s * 0.13);
-    const g = ctx.createLinearGradient(0, -s * 0.3, 0, s * 0.3);
-    g.addColorStop(0, "#b3b8bd"); g.addColorStop(1, "#868d94");
-    ctx.fillStyle = g; ctx.beginPath();
-    ctx.moveTo(-s * 0.3, s * 0.18);
-    ctx.quadraticCurveTo(-s * 0.38, -s * 0.1, -s * 0.12, -s * 0.26);
-    ctx.quadraticCurveTo(s * 0.16, -s * 0.34, s * 0.32, -s * 0.05);
-    ctx.quadraticCurveTo(s * 0.4, s * 0.2, s * 0.1, s * 0.27);
-    ctx.quadraticCurveTo(-s * 0.16, s * 0.31, -s * 0.3, s * 0.18); ctx.closePath(); ctx.fill();
-    ctx.lineWidth = Math.max(1, s * 0.03); ctx.strokeStyle = "#6f767c"; ctx.stroke();
-    ctx.strokeStyle = "rgba(80,86,92,0.6)"; ctx.lineWidth = Math.max(1, s * 0.02);
-    ctx.beginPath(); ctx.moveTo(-s * 0.02, -s * 0.2); ctx.lineTo(s * 0.06, -s * 0.02); ctx.lineTo(-s * 0.04, s * 0.14); ctx.stroke();
-    ctx.fillStyle = "rgba(255,255,255,0.35)"; ctx.beginPath(); ctx.ellipse(-s * 0.08, -s * 0.12, s * 0.12, s * 0.06, -0.4, 0, 7); ctx.fill();
+    ctx.save(); ctx.translate(cx2, cy2);
+    groundShadow(s * 0.3, s * 0.12);
+    if (SPR.rock.ready) stamp(SPR.rock, s * 0.9); else blob("#9aa0a6", s);
     ctx.restore();
   }
   function drawFish(cx2, cy2, s, faceRight) {
     ctx.save(); ctx.translate(cx2, cy2);
-    groundShadow(s * 0.32, s * 0.12);
+    groundShadow(s * 0.3, s * 0.11);
+    ctx.translate(0, Math.sin(G.time * 6 + cx2 * 0.05) * s * 0.05);
     if (faceRight) ctx.scale(-1, 1);
-    ctx.lineJoin = "round"; ctx.lineCap = "round";
-    // tail
-    ctx.fillStyle = "#4f97a8";
-    ctx.beginPath(); ctx.moveTo(s * 0.2, 0); ctx.lineTo(s * 0.44, -s * 0.18); ctx.quadraticCurveTo(s * 0.36, 0, s * 0.44, s * 0.18); ctx.closePath(); ctx.fill();
-    // body
-    const g = ctx.createLinearGradient(0, -s * 0.2, 0, s * 0.2);
-    g.addColorStop(0, "#7fc6d6"); g.addColorStop(1, "#579eb0");
-    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, 0, s * 0.31, s * 0.21, 0, 0, 7); ctx.fill();
-    ctx.lineWidth = Math.max(1, s * 0.028); ctx.strokeStyle = "#3f7d8c"; ctx.stroke();
-    // belly
-    ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.beginPath(); ctx.ellipse(-s * 0.02, s * 0.08, s * 0.22, s * 0.09, 0, 0, 7); ctx.fill();
-    // top fin
-    ctx.fillStyle = "#4f97a8"; ctx.beginPath(); ctx.moveTo(-s * 0.02, -s * 0.18); ctx.lineTo(-s * 0.14, -s * 0.32); ctx.lineTo(s * 0.1, -s * 0.2); ctx.closePath(); ctx.fill();
-    // gill
-    ctx.strokeStyle = "rgba(63,125,140,0.7)"; ctx.lineWidth = Math.max(1, s * 0.02); ctx.beginPath(); ctx.arc(-s * 0.02, 0, s * 0.1, -1, 1); ctx.stroke();
-    // eye
-    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(-s * 0.15, -s * 0.03, s * 0.07, 0, 7); ctx.fill();
-    ctx.fillStyle = "#12303a"; ctx.beginPath(); ctx.arc(-s * 0.16, -s * 0.03, s * 0.035, 0, 7); ctx.fill();
-    // grumpy brow
-    ctx.strokeStyle = "#2b5560"; ctx.lineWidth = Math.max(1, s * 0.035);
-    ctx.beginPath(); ctx.moveTo(-s * 0.24, -s * 0.14); ctx.lineTo(-s * 0.06, -s * 0.07); ctx.stroke();
+    if (SPR.fish.ready) stamp(SPR.fish, s * 0.98); else blob("#6fb7c9", s);
+    ctx.restore();
+  }
+  function drawTailPaddle(cx2, cy2, ang, s) {
+    ctx.save(); ctx.translate(cx2, cy2); ctx.rotate(ang);
+    if (SPR.tail.ready) stamp(SPR.tail, s * 1.5); else blob("#8a5c30", s);
+    ctx.restore();
+  }
+
+  // The star of the show. `ang` is travel direction; the face stays upright.
+  function drawBeaverHead(cx2, cy2, ang, r) {
+    const dx = Math.cos(ang), dy = Math.sin(ang);
+    const pop = G.pop > 0 ? G.pop : 0;              // chomp squash
+    const bob = Math.sin(G.time * 6) * r * 0.05;
+    ctx.save();
+    ctx.translate(cx2, cy2 + bob);
+    groundShadow(r * 0.9, r * 0.36);
+    ctx.rotate(dx * 0.16);                          // lean into left/right turns
+    ctx.scale(1 + pop * 0.22, 1 - pop * 0.14);      // squash & stretch on chomp
+    const size = r * 2.95;                          // big head = cute proportions
+    if (SPR.beaver.ready) stamp(SPR.beaver, size); else blob("#a9713f", r * 2);
+
+    // eyes drawn on top so they can glance & blink
+    const k = size / 120;                            // sprite units -> px
+    const ex = 17 * k, ey = -8 * k, er = 8.5 * k;
+    const blink = ((G.time * 0.9 + 0.3) % 4.2) < 0.13;
+    for (const sgn of [-1, 1]) {
+      const bx = sgn * ex;
+      if (blink) {
+        ctx.strokeStyle = "#3a2416"; ctx.lineWidth = Math.max(1.4, 2.6 * k); ctx.lineCap = "round";
+        ctx.beginPath(); ctx.arc(bx, ey, er * 0.7, 0.25 * Math.PI, 0.75 * Math.PI); ctx.stroke();
+      } else {
+        ctx.fillStyle = "#fff";
+        ctx.beginPath(); ctx.ellipse(bx, ey, er, er * 1.1, 0, 0, 7); ctx.fill();
+        ctx.strokeStyle = "#7a4a24"; ctx.lineWidth = Math.max(1, 1.6 * k); ctx.stroke();
+        // pupil looks where the beaver is heading
+        const pxo = dx * er * 0.34, pyo = dy * er * 0.34;
+        ctx.fillStyle = "#2a1d12";
+        ctx.beginPath(); ctx.ellipse(bx + pxo, ey + pyo, er * 0.52, er * 0.6, 0, 0, 7); ctx.fill();
+        ctx.fillStyle = "#fff";
+        ctx.beginPath(); ctx.arc(bx + pxo - er * 0.2, ey + pyo - er * 0.24, er * 0.2, 0, 7); ctx.fill();
+      }
+    }
     ctx.restore();
   }
 
@@ -681,14 +633,34 @@
     ctx.fillRect(-20, -20, W + 40, H + 40);
 
     // board (grass) with soft checker
-    roundRect(boardX - 6, boardY - 6, boardPx + 12, boardPx + 12, 16);
-    ctx.fillStyle = "#8a5a34"; ctx.fill(); // wooden frame
+    // wooden frame with a soft drop shadow
     ctx.save();
-    roundRect(boardX, boardY, boardPx, boardPx, 10); ctx.clip();
-    ctx.fillStyle = "#bfe3a0"; ctx.fillRect(boardX, boardY, boardPx, boardPx);
+    ctx.shadowColor = "rgba(80,110,70,0.35)"; ctx.shadowBlur = 18; ctx.shadowOffsetY = 6;
+    roundRect(boardX - 7, boardY - 7, boardPx + 14, boardPx + 14, 18);
+    const fg = ctx.createLinearGradient(0, boardY - 7, 0, boardY + boardPx + 7);
+    fg.addColorStop(0, "#a06c3e"); fg.addColorStop(1, "#7a4d29");
+    ctx.fillStyle = fg; ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    roundRect(boardX, boardY, boardPx, boardPx, 11); ctx.clip();
+    const gg = ctx.createLinearGradient(0, boardY, 0, boardY + boardPx);
+    gg.addColorStop(0, "#c9e9a9"); gg.addColorStop(1, "#b2dc93");
+    ctx.fillStyle = gg; ctx.fillRect(boardX, boardY, boardPx, boardPx);
     ctx.fillStyle = "rgba(255,255,255,0.10)";
     for (let gy = 0; gy < N; gy++) for (let gx = 0; gx < N; gx++) {
       if ((gx + gy) % 2 === 0) ctx.fillRect(boardX + gx * cell, boardY + gy * cell, cell, cell);
+    }
+    // scattered grass tufts for texture
+    ctx.strokeStyle = "rgba(120,180,100,0.4)"; ctx.lineCap = "round";
+    ctx.lineWidth = Math.max(1, cell * 0.05);
+    for (const tf of tufts) {
+      const tx = boardX + tf.x * boardPx, ty = boardY + tf.y * boardPx, h = cell * 0.22;
+      ctx.beginPath();
+      ctx.moveTo(tx, ty); ctx.lineTo(tx - h * 0.5, ty - h);
+      ctx.moveTo(tx, ty); ctx.lineTo(tx, ty - h * 1.2);
+      ctx.moveTo(tx, ty); ctx.lineTo(tx + h * 0.5, ty - h);
+      ctx.stroke();
     }
 
     const t = clamp(G.acc / (G.speedT > 0 ? G.tick * 0.6 : G.tick), 0, 1);
@@ -751,30 +723,31 @@
       const cx2 = boardX + lerp(from.x, snake[i].x, t) * cell + cell / 2;
       const cy2 = boardY + lerp(from.y, snake[i].y, t) * cell + cell / 2;
       const isTail = i === snake.length - 1;
-      const rad = cell * (isTail ? 0.5 : 0.44);
+      const rad = cell * (isTail ? 0.5 : 0.41);
       if (isTail) {
-        // flat paddle tail with scale texture + outline
         const prev = snake[i - 1] || snake[i];
         const ang = Math.atan2(snake[i].y - prev.y, snake[i].x - prev.x);
-        ctx.save(); ctx.translate(cx2, cy2); ctx.rotate(ang); ctx.lineJoin = "round";
-        const tg = ctx.createLinearGradient(0, -rad, 0, rad);
-        if (starOn) { tg.addColorStop(0, `hsl(${(G.time * 200) % 360},80%,70%)`); tg.addColorStop(1, `hsl(${(G.time * 200 + 40) % 360},80%,55%)`); }
-        else { tg.addColorStop(0, "#b07c47"); tg.addColorStop(1, "#8a5c30"); }
-        ctx.fillStyle = tg;
-        ctx.beginPath(); ctx.ellipse(rad * 0.16, 0, rad * 1.18, rad * 0.82, 0, 0, 7); ctx.fill();
-        ctx.lineWidth = Math.max(1, cell * 0.05); ctx.strokeStyle = starOn ? "rgba(255,255,255,0.5)" : "#6e4423"; ctx.stroke();
-        ctx.strokeStyle = "rgba(0,0,0,0.14)"; ctx.lineWidth = Math.max(1, cell * 0.02);
-        ctx.beginPath();
-        ctx.moveTo(-rad * 0.3, -rad * 0.45); ctx.lineTo(rad * 0.95, -rad * 0.22);
-        ctx.moveTo(-rad * 0.45, 0); ctx.lineTo(rad * 1.05, 0);
-        ctx.moveTo(-rad * 0.3, rad * 0.45); ctx.lineTo(rad * 0.95, rad * 0.22); ctx.stroke();
-        ctx.restore();
+        if (starOn) {
+          ctx.save(); ctx.translate(cx2, cy2); ctx.rotate(ang);
+          ctx.fillStyle = `hsl(${(G.time * 200) % 360},80%,64%)`;
+          ctx.beginPath(); ctx.ellipse(rad * 0.16, 0, rad * 1.18, rad * 0.82, 0, 0, 7); ctx.fill();
+          ctx.lineWidth = Math.max(1, cell * 0.05); ctx.strokeStyle = "rgba(255,255,255,0.6)"; ctx.stroke();
+          ctx.restore();
+        } else {
+          drawTailPaddle(cx2, cy2, ang, cell);
+        }
       } else {
-        const bg = ctx.createRadialGradient(cx2 - rad * 0.35, cy2 - rad * 0.35, rad * 0.2, cx2, cy2, rad);
-        if (starOn) { bg.addColorStop(0, `hsl(${(G.time * 200 + i * 24) % 360},85%,72%)`); bg.addColorStop(1, `hsl(${(G.time * 200 + i * 24) % 360},80%,52%)`); }
-        else { bg.addColorStop(0, "#bd8551"); bg.addColorStop(1, "#96612f"); }
+        // chunky rounded body with a soft outline so the beaver reads as one creature
+        const bg = ctx.createRadialGradient(cx2 - rad * 0.35, cy2 - rad * 0.4, rad * 0.15, cx2, cy2, rad);
+        if (starOn) { bg.addColorStop(0, `hsl(${(G.time * 200 + i * 24) % 360},85%,74%)`); bg.addColorStop(1, `hsl(${(G.time * 200 + i * 24) % 360},80%,54%)`); }
+        else { bg.addColorStop(0, "#d09a63"); bg.addColorStop(1, "#a06937"); }
         ctx.fillStyle = bg;
         ctx.beginPath(); ctx.arc(cx2, cy2, rad, 0, 7); ctx.fill();
+        ctx.lineWidth = Math.max(1, cell * 0.045);
+        ctx.strokeStyle = starOn ? "rgba(255,255,255,0.5)" : "#7a4a24";
+        ctx.stroke();
+        ctx.fillStyle = "rgba(255,255,255,0.16)";
+        ctx.beginPath(); ctx.ellipse(cx2 - rad * 0.28, cy2 - rad * 0.34, rad * 0.42, rad * 0.26, -0.5, 0, 7); ctx.fill();
       }
     }
     // head
@@ -789,6 +762,14 @@
     }
     } // end if snake.length
     ctx.globalAlpha = 1;
+
+    // soft vignette gives the board depth
+    const vg = ctx.createRadialGradient(
+      boardX + boardPx / 2, boardY + boardPx / 2, boardPx * 0.32,
+      boardX + boardPx / 2, boardY + boardPx / 2, boardPx * 0.78);
+    vg.addColorStop(0, "rgba(60,90,45,0)");
+    vg.addColorStop(1, "rgba(60,90,45,0.16)");
+    ctx.fillStyle = vg; ctx.fillRect(boardX, boardY, boardPx, boardPx);
 
     ctx.restore(); // unclip board
 
