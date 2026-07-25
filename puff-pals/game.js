@@ -936,8 +936,9 @@
         R.px += Math.sign(d) * speed;
       }
     } else if (R.mode === "idle" && !R.washing) {
-      // gentle wandering
-      if (Math.random() < dt * 0.16) walkTo(clamp(R.px + rand(-0.2, 0.2), 0.12, 0.88));
+      // gentle wandering, but kept away from the edges — a puff pressed up
+      // against the side of the screen is harder to pet and looks stranded
+      if (Math.random() < dt * 0.16) walkTo(clamp(R.px + rand(-0.18, 0.18), 0.26, 0.74));
     }
 
     // eating

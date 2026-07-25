@@ -1,5 +1,5 @@
 /* Puff Pals — service worker (offline app shell) */
-const CACHE = "puff-pals-v1";
+const CACHE = "puff-pals-v2";
 const ASSETS = [
   "./",
   "./index.html",
