@@ -1,5 +1,5 @@
 /* Beaver Chase — service worker (offline app shell) */
-const CACHE = "beaver-chase-v1";
+const CACHE = "beaver-chase-v2";
 const ASSETS = [
   "./",
   "./index.html",

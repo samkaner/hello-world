@@ -140,6 +140,7 @@
 
   // snake as list of grid cells (head first); prev = pre-tick copy for lerp
   let snake = [], snakePrev = [], dir = { x: 1, y: 0 }, dirQueue = [], grow = 0;
+  let carried = [];   // the goodies you've chomped, riding along your tail
   let items = [], special = null, specialT = 0, nextSpecial = 0;
   let rocks = new Set(), hazards = [];
   let floaters = [], puffs = [];
@@ -221,7 +222,7 @@
     G.timeLeft = cfg.duration;
     G.target = cfg.target;
     G.acc = 0;
-    dir = { x: 1, y: 0 }; dirQueue = []; grow = 0;
+    dir = { x: 1, y: 0 }; dirQueue = []; grow = 0; carried = [];
     // snake starts short, centered, heading right
     const cxg = Math.floor(N / 2), cyg = Math.floor(N / 2);
     snake = [
@@ -277,7 +278,7 @@
     const cxg = Math.floor(N / 2), cyg = Math.floor(N / 2);
     snake = [{ x: cxg, y: cyg }, { x: cxg - 1, y: cyg }, { x: cxg - 2, y: cyg }];
     snakePrev = snake.map((c) => ({ ...c }));
-    dir = { x: 1, y: 0 }; dirQueue = []; grow = 0;
+    dir = { x: 1, y: 0 }; dirQueue = []; grow = 0; carried = [];
     G.invuln = 1.6; G.starT = 0;
   }
   function gameOver() {
@@ -349,6 +350,7 @@
     grow += it.grow;
     if (it.speed) G.speedT = 3;
     G.pop = 1;
+    for (let n = 0; n < it.grow; n++) carried.push(it.k);   // it rides your tail now
     floater(px(it.x), py(it.y), "+" + gained + (mult > 1 ? " x" + mult : ""), it.k === "gem" ? "#ffd54a" : "#3f7d3a");
     puff(px(it.x), py(it.y), it.g);
     Sound.play(it.k === "gem" ? "gem" : "chomp");
@@ -361,7 +363,7 @@
     puff(px(sp.x), py(sp.y), sp.g);
     if (sp.k === "star") G.starT = 5;
     else if (sp.k === "clock") G.timeLeft += 6;
-    else if (sp.k === "shrink") { for (let i = 0; i < 5 && snake.length > 3; i++) snake.pop(); }
+    else if (sp.k === "shrink") { for (let i = 0; i < 5 && snake.length > 3; i++) { snake.pop(); carried.pop(); } }
     else if (sp.k === "shield") G.shield = true;
     else if (sp.k === "bolt") G.speedT = 4;
     updateHud();
@@ -481,6 +483,11 @@
  <radialGradient id="rm" cx="0" cy="-4" r="50" gradientUnits="userSpaceOnUse"><stop offset="0.72" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#5b3a1e" stop-opacity="0.26"/></radialGradient>
  <linearGradient id="mz" x1="0" y1="-4" x2="0" y2="36" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fbeed4"/><stop offset="1" stop-color="#eed6ae"/></linearGradient>
 </defs>
+<g fill="#b0713c" stroke="#7a4a24" stroke-width="3.4" stroke-linejoin="round" stroke-linecap="round">
+ <path d="M-11 -40 C -19 -50, -12 -58, -4 -55 C -10 -51, -9 -45, -6 -41 Z"/>
+ <path d="M-1 -42 C -3 -57, 8 -61, 13 -55 C 6 -53, 3 -47, 3 -42 Z"/>
+ <path d="M7 -40 C 14 -50, 22 -48, 21 -42 C 15 -43, 12 -40, 10 -37 Z"/>
+</g>
 <g stroke="#7a4a24" stroke-width="4.5" stroke-linejoin="round">
  <circle cx="-34" cy="-30" r="15" fill="#a06937"/><circle cx="34" cy="-30" r="15" fill="#a06937"/>
 </g>
@@ -580,6 +587,15 @@
     ctx.translate(0, Math.sin(G.time * 6 + cx2 * 0.05) * s * 0.05);
     if (faceRight) ctx.scale(-1, 1);
     if (SPR.fish.ready) stamp(SPR.fish, s * 0.98); else blob("#6fb7c9", s);
+    ctx.restore();
+  }
+  // a goodie riding on the beaver's back (no ground shadow — it's not on the grass)
+  function drawCarried(kind, cx2, cy2, s) {
+    const im = SPR[kind];
+    if (!im || !im.ready) return;
+    ctx.save(); ctx.translate(cx2, cy2);
+    ctx.shadowColor = "rgba(70,45,20,0.35)"; ctx.shadowBlur = s * 0.12; ctx.shadowOffsetY = s * 0.04;
+    stamp(im, s);
     ctx.restore();
   }
   function drawTailPaddle(cx2, cy2, ang, s) {
@@ -728,7 +744,9 @@
       const cx2 = boardX + lerp(from.x, snake[i].x, t) * cell + cell / 2;
       const cy2 = boardY + lerp(from.y, snake[i].y, t) * cell + cell / 2;
       const isTail = i === snake.length - 1;
-      const rad = cell * (isTail ? 0.5 : 0.41);
+      // body tapers gently from shoulders to tail
+      const taper = 1 - 0.22 * (i / Math.max(2, snake.length - 1));
+      const rad = cell * (isTail ? 0.5 : 0.44 * taper);
       if (isTail) {
         const prev = snake[i - 1] || snake[i];
         const ang = Math.atan2(snake[i].y - prev.y, snake[i].x - prev.x);
@@ -753,6 +771,9 @@
         ctx.stroke();
         ctx.fillStyle = "rgba(255,255,255,0.16)";
         ctx.beginPath(); ctx.ellipse(cx2 - rad * 0.28, cy2 - rad * 0.34, rad * 0.42, rad * 0.26, -0.5, 0, 7); ctx.fill();
+        // the goodie this segment is carrying
+        const k = carried[i - 1];
+        if (k && !starOn) drawCarried(k, cx2, cy2 - rad * 0.12, cell * 0.58);
       }
     }
     // head
@@ -977,6 +998,19 @@
   updateHud();
   renderLbInto(el.lbPeek, -1);
   requestAnimationFrame(loop);
+
+  // Opt-in test hook (?debug=1): read-only board state so automated checks can
+  // steer the beaver deterministically. Off by default during normal play.
+  if (location.search.indexOf("debug=1") >= 0) {
+    window.__bc = {
+      head: () => ({ ...snake[0] }),
+      dir: () => ({ ...dir }),
+      items: () => items.map((i) => ({ x: i.x, y: i.y, k: i.k })),
+      rocks: () => Array.from(rocks),
+      carried: () => carried.slice(),
+      size: () => N,
+    };
+  }
 
   if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
     window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));

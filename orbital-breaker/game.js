@@ -790,81 +790,75 @@
   }
 
   // the cloud friend at the center — the thing you protect
+  // ---------- SVG sprite: the cloud friend ----------
+  // Authored as layered vector art, stamped into the canvas. Eyes and mouth are
+  // drawn on top in canvas so the little one can blink and look worried.
+  const CLOUD_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-60 -60 120 120" width="256" height="256">
+<defs>
+ <radialGradient id="cl" cx="-16" cy="-20" r="72" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#ddefff"/></radialGradient>
+</defs>
+<g fill="url(#cl)">
+ <ellipse cx="-44" cy="4" rx="12" ry="20"/><ellipse cx="44" cy="4" rx="12" ry="20"/>
+ <circle cx="-26" cy="8" r="23"/><circle cx="26" cy="8" r="23"/>
+ <circle cx="-13" cy="-11" r="21"/><circle cx="14" cy="-9" r="23"/>
+ <circle cx="0" cy="12" r="27"/>
+</g>
+<circle cx="-27" cy="15" r="8.5" fill="#ffb0c8" opacity="0.6"/>
+<circle cx="27" cy="15" r="8.5" fill="#ffb0c8" opacity="0.6"/>
+</svg>`;
+  const cloudImg = new Image();
+  let cloudReady = false;
+  cloudImg.onload = () => { cloudReady = true; };
+  cloudImg.src = "data:image/svg+xml;charset=utf8," + encodeURIComponent(CLOUD_SVG);
+
   function drawCloudFriend(danger) {
-    const bob = Math.sin(G.time * 2) * (R_core * 0.05);
-    const u = R_core / 24; // unit scale (design space ~24px radius)
+    const bob = Math.sin(G.time * 2) * (R_core * 0.06);
+    const worried = danger > 0.55;
+    const size = R_core * 3.1;
     ctx.save();
     ctx.translate(cx, cy + bob);
-    ctx.scale(u, u);
 
-    // worried tint when the ball closes in
-    const bodyTint = danger > 0.55 ? "#eef4ff" : "#ffffff";
-
-    // floppy ears
-    ctx.fillStyle = "#ffffff";
-    ctx.strokeStyle = "rgba(150,200,240,0.55)";
-    ctx.lineWidth = 1.4;
-    for (const sgn of [-1, 1]) {
-      ctx.save();
-      ctx.translate(sgn * 20, -2);
-      ctx.rotate(sgn * 0.5);
-      ctx.beginPath();
-      ctx.ellipse(0, 6, 6.5, 12, 0, 0, TAU);
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
+    // soft blue glow so it reads against the sky
+    ctx.shadowColor = worried ? "rgba(255,150,170,0.75)" : "rgba(130,195,245,0.75)";
+    ctx.shadowBlur = R_core * 0.6;
+    if (cloudReady) {
+      ctx.drawImage(cloudImg, -size / 2, -size / 2, size, size);
+    } else {
+      ctx.fillStyle = "#fff";
+      ctx.beginPath(); ctx.arc(0, 0, R_core, 0, TAU); ctx.fill();
     }
-
-    // fluffy body (soft blue outline via shadow)
-    ctx.shadowColor = "rgba(140,195,240,0.7)";
-    ctx.shadowBlur = 6;
-    drawPuff(0, 1, 15, bodyTint);
     ctx.shadowBlur = 0;
 
-    // blush cheeks
-    ctx.fillStyle = "rgba(255,155,190,0.7)";
-    ctx.beginPath();
-    ctx.arc(-11, 5, 3.4, 0, TAU);
-    ctx.arc(11, 5, 3.4, 0, TAU);
-    ctx.fill();
+    // ----- face (canvas so it can emote) -----
+    const k = size / 120;                       // sprite units -> px
+    const ex = 11 * k, ey = -2 * k, er = 4.6 * k;
+    const blink = ((G.time * 0.85) % 4.6) < 0.14;
 
-    // eyes
-    ctx.fillStyle = "#4a5a72";
-    if (danger > 0.55) {
-      // worried: little upside-down U eyes
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "#4a5a72";
-      for (const sgn of [-1, 1]) {
-        ctx.beginPath();
-        ctx.arc(sgn * 6, 0, 2.4, Math.PI * 1.05, Math.PI * 1.95);
-        ctx.stroke();
-      }
-    } else {
-      for (const sgn of [-1, 1]) {
-        ctx.beginPath();
-        ctx.ellipse(sgn * 6, 0, 1.9, 2.7, 0, 0, TAU);
-        ctx.fill();
-      }
-    }
-    // eye sparkle
-    if (danger <= 0.55) {
-      ctx.fillStyle = "rgba(255,255,255,0.9)";
-      for (const sgn of [-1, 1]) {
-        ctx.beginPath();
-        ctx.arc(sgn * 6 - 0.6, -0.9, 0.7, 0, TAU);
-        ctx.fill();
+    for (const sgn of [-1, 1]) {
+      const bx = sgn * ex;
+      if (blink && !worried) {
+        ctx.strokeStyle = "#5a6b86"; ctx.lineWidth = Math.max(1.3, 1.9 * k); ctx.lineCap = "round";
+        ctx.beginPath(); ctx.arc(bx, ey, er * 0.9, 0.2 * Math.PI, 0.8 * Math.PI); ctx.stroke();
+      } else if (worried) {
+        // upside-down U — anxious little eyes
+        ctx.strokeStyle = "#5a6b86"; ctx.lineWidth = Math.max(1.4, 2.1 * k); ctx.lineCap = "round";
+        ctx.beginPath(); ctx.arc(bx, ey + er * 0.3, er * 0.85, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke();
+      } else {
+        ctx.fillStyle = "#4a5a72";
+        ctx.beginPath(); ctx.ellipse(bx, ey, er * 0.78, er, 0, 0, TAU); ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.95)";
+        ctx.beginPath(); ctx.arc(bx - er * 0.3, ey - er * 0.36, er * 0.3, 0, TAU); ctx.fill();
       }
     }
 
     // mouth
-    ctx.strokeStyle = "#4a5a72";
-    ctx.lineWidth = 1.4;
+    ctx.strokeStyle = "#5a6b86"; ctx.lineWidth = Math.max(1.3, 1.9 * k); ctx.lineCap = "round";
     ctx.beginPath();
-    if (danger > 0.55) {
-      ctx.arc(0, 8.5, 1.8, 0, TAU); // worried little "o"
+    if (worried) {
+      ctx.ellipse(0, 11 * k, 2.4 * k, 3 * k, 0, 0, TAU);   // little "o"
     } else {
-      ctx.moveTo(-2, 7);
-      ctx.quadraticCurveTo(0, 9.2, 2, 7); // gentle smile
+      ctx.moveTo(-3.2 * k, 8 * k);
+      ctx.quadraticCurveTo(0, 12 * k, 3.2 * k, 8 * k);      // gentle smile
     }
     ctx.stroke();
 
